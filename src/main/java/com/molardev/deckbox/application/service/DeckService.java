@@ -6,8 +6,11 @@ import com.molardev.deckbox.application.common.commands.DeleteDeckCommand;
 import com.molardev.deckbox.application.common.commands.GetDeckByIdCommand;
 import com.molardev.deckbox.application.common.commands.RemoveCardFromDeckCommand;
 import com.molardev.deckbox.application.common.commands.UpdateCardCountCommand;
+import com.molardev.deckbox.application.common.commands.ValidateDeckCommand;
 import com.molardev.deckbox.application.common.interfaces.IDeckRepository;
+import com.molardev.deckbox.application.common.interfaces.IFormatRepository;
 import com.molardev.deckbox.domain.entity.Deck;
+import com.molardev.deckbox.domain.service.DeckValidator;
 import com.molardev.deckbox.domain.valueobject.CardCount;
 import com.molardev.deckbox.domain.valueobject.DeckName;
 import com.molardev.deckbox.domain.valueobject.DeckReference;
@@ -21,9 +24,11 @@ import org.springframework.stereotype.Service;
 @Service
 public class DeckService {
     private final IDeckRepository deckRepository;
+		private final IFormatRepository formatRepository;
 
-    public DeckService(IDeckRepository deckRepository) {
+    public DeckService(IDeckRepository deckRepository, IFormatRepository formatRepository) {
         this.deckRepository = deckRepository;
+        this.formatRepository = formatRepository;
     }
 
     public Validation<Seq<String>, Deck> createDeck(CreateDeckCommand command) {
@@ -65,5 +70,15 @@ public class DeckService {
 		
 		public Validation<Seq<String>, Void> deleteDeckById(DeleteDeckCommand command) {
 			return deckRepository.deleteById(command.id());
+		}
+
+		public Validation<Seq<String>, Deck> validateDeckAgainstFormat(ValidateDeckCommand command) {
+			return deckRepository.findById(command.deckId())
+				.flatMap(deck -> formatRepository.findById(command.formatId())
+					.flatMap(format -> {
+						DeckValidator validator = new DeckValidator(format.getRules());
+						return validator.validate(deck);
+					})
+				);
 		}
 }
