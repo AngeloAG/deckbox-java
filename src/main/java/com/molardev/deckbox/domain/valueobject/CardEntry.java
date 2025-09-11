@@ -31,6 +31,10 @@ public class CardEntry {
         return count;
     }
 
+		public CardEntry withCount(CardCount newCount) {
+			return new CardEntry(this.card, newCount);
+		}
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

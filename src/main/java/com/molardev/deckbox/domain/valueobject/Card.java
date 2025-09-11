@@ -11,22 +11,22 @@ import com.molardev.deckbox.domain.enums.Legality;
 
 public class Card {
     private final CardReference cardReference;
-    private final CardType cardType;
+    private final CardClassification cardClassification;
 		private final List<Legality> legalities;
     private final List<ElementalType> elementalTypes;
 		private final CardImageUrl imageUrl;
 
-    private Card(CardReference cardReference, CardType cardType, List<Legality> legalities, List<ElementalType> elementalTypes, CardImageUrl imageUrl) {
+    private Card(CardReference cardReference, CardClassification cardClassification, List<Legality> legalities, List<ElementalType> elementalTypes, CardImageUrl imageUrl) {
         this.cardReference = cardReference;
-        this.cardType = cardType;
+        this.cardClassification = cardClassification;
         this.legalities = legalities;
         this.elementalTypes = elementalTypes;
         this.imageUrl = imageUrl;
     }
 
-    public static Validation<Seq<String>, Card> create(CardReference cardReference, CardType cardType, List<Legality> legalities, List<ElementalType> elementalTypes, CardImageUrl imageUrl) {
-        return validateElementalTypes(cardType, elementalTypes)
-                .map(validTypes -> new Card(cardReference, cardType, legalities, validTypes, imageUrl));
+    public static Validation<Seq<String>, Card> create(CardReference cardReference, CardClassification cardClassification, List<Legality> legalities, List<ElementalType> elementalTypes, CardImageUrl imageUrl) {
+        return validateElementalTypes(cardClassification.getSuperType(), elementalTypes)
+                .map(validTypes -> new Card(cardReference, cardClassification, legalities, validTypes, imageUrl));
     }
 
     private static Validation<Seq<String>, List<ElementalType>> validateElementalTypes(CardType cardType, List<ElementalType> elementalTypes) {
@@ -44,8 +44,8 @@ public class Card {
         return cardReference;
     }
 
-    public CardType getCardType() {
-        return cardType;
+    public CardClassification getCardClassification() {
+        return cardClassification;
     }
 
     public List<ElementalType> getElementalTypes() {
@@ -66,7 +66,7 @@ public class Card {
         if (o == null || getClass() != o.getClass()) return false;
         Card card = (Card) o;
         return Objects.equals(cardReference, card.cardReference) &&
-                cardType == card.cardType &&
+                Objects.equals(cardClassification, card.cardClassification) &&
                 Objects.equals(elementalTypes, card.elementalTypes) &&
                 Objects.equals(imageUrl, card.imageUrl) &&
                 Objects.equals(legalities, card.legalities);
@@ -74,14 +74,14 @@ public class Card {
 
     @Override
     public int hashCode() {
-        return Objects.hash(cardReference, cardType, elementalTypes, imageUrl, legalities);
+        return Objects.hash(cardReference, cardClassification, elementalTypes, imageUrl, legalities);
     }
 
     @Override
     public String toString() {
         return "Card{" +
                 "cardReference=" + cardReference +
-                ", cardType=" + cardType +
+                ", cardClassification=" + cardClassification +
                 ", elementalTypes=" + elementalTypes +
                 ", imageUrl=" + imageUrl +
                 ", legalities=" + legalities +
