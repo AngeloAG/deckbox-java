@@ -2,6 +2,7 @@ package com.molardev.deckbox.application.service;
 
 import com.molardev.deckbox.application.common.commands.AddCardToDeckCommand;
 import com.molardev.deckbox.application.common.commands.CreateDeckCommand;
+import com.molardev.deckbox.application.common.commands.DeleteDeckCommand;
 import com.molardev.deckbox.application.common.commands.GetDeckByIdCommand;
 import com.molardev.deckbox.application.common.commands.RemoveCardFromDeckCommand;
 import com.molardev.deckbox.application.common.commands.UpdateCardCountCommand;
@@ -60,5 +61,9 @@ public class DeckService {
 
 		public Validation<Seq<String>, Seq<DeckReference>> getAllDeckReferences() {
 			return deckRepository.findAllDeckReferences();
+		}
+		
+		public Validation<Seq<String>, Void> deleteDeckById(DeleteDeckCommand command) {
+			return deckRepository.deleteById(command.id());
 		}
 }

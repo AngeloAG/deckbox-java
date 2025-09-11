@@ -12,4 +12,5 @@ public interface IDeckRepository {
     Validation<Seq<String>, Deck> save(Deck deck);
     Validation<Seq<String>, Deck> findById(UUID id);
 		Validation<Seq<String>, Seq<DeckReference>> findAllDeckReferences();
+		Validation<Seq<String>, Void> deleteById(UUID id);
 }
