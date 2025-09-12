@@ -9,6 +9,8 @@ public class CardEntryEntity {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
+		@ManyToOne
+		@JoinColumn(name = "card_id", referencedColumnName = "id")
     private CardEntity card;
 		private int count;
 
