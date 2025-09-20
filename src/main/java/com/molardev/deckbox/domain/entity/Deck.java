@@ -2,6 +2,8 @@ package com.molardev.deckbox.domain.entity;
 
 import java.util.Objects;
 
+import com.molardev.deckbox.domain.valueobject.Card;
+import com.molardev.deckbox.domain.valueobject.CardCount;
 import com.molardev.deckbox.domain.valueobject.CardEntry;
 import com.molardev.deckbox.domain.valueobject.DeckReference;
 
@@ -39,6 +41,11 @@ public class Deck {
 
 	// Add a card entry to the deck (returns new Deck)
 	public Deck addCard(CardEntry entry) {
+		return new Deck(deckReference, cardEntries.append(entry));
+	}
+
+	public Deck addCard(Card card, CardCount count) {
+		CardEntry entry = CardEntry.create(card, count).get();
 		return new Deck(deckReference, cardEntries.append(entry));
 	}
 

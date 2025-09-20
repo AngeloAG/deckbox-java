@@ -12,7 +12,8 @@ import java.util.Objects;
 public class CardClassification {
     private static final java.util.Set<CardSubtype> POKEMON_SUBTYPES = java.util.EnumSet.of(
         CardSubtype.NO_RULE_BOX, CardSubtype.LEGEND, CardSubtype.MEGA, CardSubtype.GX,
-        CardSubtype.V, CardSubtype.VMAX, CardSubtype.VSTAR, CardSubtype.RADIANT
+        CardSubtype.V, CardSubtype.VMAX, CardSubtype.VSTAR, CardSubtype.RADIANT, CardSubtype.BASIC,
+				CardSubtype.STAGE_1, CardSubtype.STAGE_2
     );
     private static final java.util.Set<CardSubtype> TRAINER_SUBTYPES = java.util.EnumSet.of(
         CardSubtype.SUPPORTER, CardSubtype.ITEM, CardSubtype.STADIUM, CardSubtype.POKEMON_TOOL

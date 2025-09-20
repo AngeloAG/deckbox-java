@@ -13,35 +13,35 @@ import io.vavr.collection.Seq;
 import io.vavr.control.Validation;
 
 public class FormatService {
-	private final IFormatRepository deckFormatRepository;
+	// private final IFormatRepository deckFormatRepository;
 
-	public FormatService(IFormatRepository deckFormatRepository) {
-		this.deckFormatRepository = deckFormatRepository;
-	}
+	// public FormatService(IFormatRepository deckFormatRepository) {
+	// 	this.deckFormatRepository = deckFormatRepository;
+	// }
 
-	public Validation<Seq<String>, Format> createDeckFormat(CreateFormatCommand command) {
-		return FormatReference.create(command.name(), command.description())
-			.flatMap(formatRef -> Format.create(formatRef, List.of()))
-			.flatMap(deckFormatRepository::save);
-	}	
+	// public Validation<Seq<String>, Format> createDeckFormat(CreateFormatCommand command) {
+	// 	return FormatReference.create(command.name(), command.description())
+	// 		.flatMap(formatRef -> Format.create(formatRef, List.of()))
+	// 		.flatMap(deckFormatRepository::save);
+	// }	
 
-	public Validation<Seq<String>, Format> addRuleToFormat(AddRuleToFormatCommand command) {
-		return deckFormatRepository.findById(command.id()).flatMap(format -> 
-			deckFormatRepository.save(format.addRule(command.rule()))
-		);
-	}
+	// public Validation<Seq<String>, Format> addRuleToFormat(AddRuleToFormatCommand command) {
+	// 	return deckFormatRepository.findById(command.id()).flatMap(format -> 
+	// 		deckFormatRepository.save(format.addRule(command.rule()))
+	// 	);
+	// }
 
-	public Validation<Seq<String>, Format> removeRuleFromFormat(RemoveRuleFromFormatCommand command) {
-		return deckFormatRepository.findById(command.id()).flatMap(format -> 
-			deckFormatRepository.save(format.removeRule(command.rule()))
-		);
-	}
+	// public Validation<Seq<String>, Format> removeRuleFromFormat(RemoveRuleFromFormatCommand command) {
+	// 	return deckFormatRepository.findById(command.id()).flatMap(format -> 
+	// 		deckFormatRepository.save(format.removeRule(command.rule()))
+	// 	);
+	// }
 
-	public Validation<Seq<String>, Seq<FormatReference>> getAllFormatReferences() {
-		return deckFormatRepository.findAllFormats();
-	}
+	// public Validation<Seq<String>, Seq<FormatReference>> getAllFormatReferences() {
+	// 	return deckFormatRepository.findAllFormats();
+	// }
 
-	public Validation<Seq<String>, Void> deleteFormatById(DeleteFormatCommand command) {
-		return deckFormatRepository.deleteById(command.id());
-	}
+	// public Validation<Seq<String>, Void> deleteFormatById(DeleteFormatCommand command) {
+	// 	return deckFormatRepository.deleteById(command.id());
+	// }
 }

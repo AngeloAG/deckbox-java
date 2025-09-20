@@ -12,6 +12,7 @@ import com.molardev.deckbox.infrastructure.persistence.jpa.DeckJpaRepository;
 import com.molardev.deckbox.infrastructure.persistence.translations.DeckTranslator;
 
 import io.vavr.collection.Seq;
+import io.vavr.control.Option;
 import io.vavr.control.Validation;
 
 @Repository
@@ -25,8 +26,8 @@ public class JpaDeckRepository implements IDeckRepository {
 	@Override
 	public Validation<Seq<String>, Deck> save(Deck deck) {
 		DeckEntity entity = DeckTranslator.toEntity(deck);
-        DeckEntity saved = deckJpaRepository.save(entity);
-        return DeckTranslator.toDomain(saved);
+    DeckEntity saved = deckJpaRepository.save(entity);
+    return DeckTranslator.toDomain(saved);
 	}
 
 	@Override
@@ -49,7 +50,7 @@ public class JpaDeckRepository implements IDeckRepository {
     return references.isEmpty()
         ? Validation.invalid(io.vavr.collection.List.of("No decks found"))
         : Validation.valid(references);
-}
+	}
 
 	@Override
 	public Validation<Seq<String>, Void> deleteById(UUID id) {
@@ -57,5 +58,12 @@ public class JpaDeckRepository implements IDeckRepository {
 			deckJpaRepository.deleteById(id);
 			return Validation.<Seq<String>, Void>valid(null);
 		}).orElseGet(() -> Validation.invalid(io.vavr.collection.List.of("Deck not found with ID: " + id)));
+	}
+
+	@Override
+	public Validation<Seq<String>, Option<Deck>> findByIdWithCardEntries(UUID id) {
+		return deckJpaRepository.findByIdWithCardEntries(id)
+			.map(entity -> DeckTranslator.toDomain(entity).map(Option::of))
+			.orElseGet(() -> Validation.valid(Option.none()));
 	}
 }

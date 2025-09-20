@@ -37,8 +37,15 @@ public class DeckTranslator {
 	}
 
 	public static Validation<Seq<String>, Deck> toDomain(DeckEntity entity) {
-		return DeckName.create(entity.getName()).flatMap(name -> DeckReference.create(name, entity.getId()))
-				.flatMap(deckRef -> Deck.create(deckRef, io.vavr.collection.List.empty()));
+		io.vavr.collection.List<Validation<Seq<String>, CardEntry>> entryValidations =
+		    io.vavr.collection.List.ofAll(entity.getCardEntries()).map(DeckTranslator::toDomain);
+
+		Validation<Seq<String>, io.vavr.collection.List<CardEntry>> sequenced =
+		    Validation.sequence(entryValidations).map(io.vavr.collection.List::ofAll);
+
+		return DeckName.create(entity.getName())
+		    .flatMap(name -> DeckReference.create(name, entity.getId()))
+		    .flatMap(deckRef -> sequenced.flatMap(entries -> Deck.create(deckRef, entries)));
 	}
 
 	public static Validation<Seq<String>, Card> toDomain(CardEntity entity) {
