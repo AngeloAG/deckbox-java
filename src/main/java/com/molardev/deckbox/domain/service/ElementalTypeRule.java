@@ -7,10 +7,12 @@ import io.vavr.collection.Seq;
 import io.vavr.control.Validation;
 
 public class ElementalTypeRule implements IDeckValidationRule {
+	private final Long id;
 	private final List<ElementalType> disallowedTypes;
 	private final int maxElementalTypes;
 
-	public ElementalTypeRule(List<ElementalType> disallowedTypes, int maxElementalTypes) {
+	public ElementalTypeRule(Long id, List<ElementalType> disallowedTypes, int maxElementalTypes) {
+		this.id = id;
 		this.disallowedTypes = disallowedTypes;
 		this.maxElementalTypes = maxElementalTypes;
 	}
@@ -35,5 +37,9 @@ public class ElementalTypeRule implements IDeckValidationRule {
 		}
 
 		return errors.isEmpty() ? Validation.valid(deck) : Validation.invalid(errors);
+	}
+
+	public Long getId() {
+		return id;
 	}
 }

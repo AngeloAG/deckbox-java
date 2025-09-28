@@ -7,9 +7,11 @@ import io.vavr.collection.Seq;
 import io.vavr.control.Validation;
 
 public class DeckSizeRule implements IDeckValidationRule {
+	private final Long id;
 	private final int maxCount;
 
-	public DeckSizeRule(int maxCount) {
+	public DeckSizeRule(Long id, int maxCount) {
+		this.id = id;
 		this.maxCount = maxCount;
 	}
 
@@ -20,5 +22,13 @@ public class DeckSizeRule implements IDeckValidationRule {
 		}
 		
 		return Validation.valid(deck);
+	}
+
+	public Long getId() {
+		return id;
+	}
+
+	public int getMaxCount() {
+		return maxCount;
 	}
 }

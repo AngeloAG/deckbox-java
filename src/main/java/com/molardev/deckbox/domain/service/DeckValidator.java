@@ -6,9 +6,11 @@ import io.vavr.collection.Seq;
 import io.vavr.control.Validation;
 
 public class DeckValidator {
+	private final Long id;
 	private final List<IDeckValidationRule> rules;
 
-	public DeckValidator(List<IDeckValidationRule> rules) {
+	public DeckValidator(Long id, List<IDeckValidationRule> rules) {
+		this.id = id;
 		this.rules = rules;
 	}
 
@@ -19,5 +21,9 @@ public class DeckValidator {
 
 		Seq<String> allErrors = errorSeqs.flatMap(seq -> seq);
 		return allErrors.isEmpty() ? Validation.valid(deck) : Validation.invalid(allErrors);
+	}
+
+	public Long getId() {
+		return id;
 	}
 }

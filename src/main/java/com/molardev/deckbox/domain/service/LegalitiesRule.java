@@ -8,9 +8,11 @@ import io.vavr.collection.Seq;
 import io.vavr.control.Validation;
 
 public class LegalitiesRule implements IDeckValidationRule {
+	private final Long id;
 	private final List<Legality> disallowedLegalities;
 
-	public LegalitiesRule(List<Legality> disallowedLegalities) {
+	public LegalitiesRule(Long id, List<Legality> disallowedLegalities) {
+		this.id = id;
 		this.disallowedLegalities = disallowedLegalities;
 	}
 
@@ -22,5 +24,9 @@ public class LegalitiesRule implements IDeckValidationRule {
 			.toList();
 
 		return errors.isEmpty() ? Validation.valid(deck) : Validation.invalid(errors);
+	}
+
+	public Long getId() {
+		return id;
 	}
 }
