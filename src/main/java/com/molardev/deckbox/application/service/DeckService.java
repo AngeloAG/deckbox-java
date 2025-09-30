@@ -43,26 +43,26 @@ public class DeckService {
 				.flatMap(deckRepository::save);
 		}
 
-		   public Validation<Seq<String>, Deck> addCardToDeck(AddCardToDeckCommand command) {
-    return deckRepository.findById(command.deckId()).flatMap(deck -> {
-        Card card = command.cardEntry().getCard();
-        CardCount count = command.cardEntry().getCount();
-        String cardId = card.getCardReference().getCardId();
+		public Validation<Seq<String>, Deck> addCardToDeck(AddCardToDeckCommand command) {
+			return deckRepository.findById(command.deckId()).flatMap(deck -> {
+					Card card = command.cardEntry().getCard();
+					CardCount count = command.cardEntry().getCount();
+					String cardId = card.getCardReference().getCardId();
 
-        return cardRepository.findById(cardId)
-            .flatMap(maybeCard -> {
-								if (maybeCard.isDefined()) {
-										// Card exists, use the existing card
-										Card existingCard = maybeCard.get();
-										return deckRepository.save(deck.addCard(existingCard, count));
-								} else {
-										// Card does not exist, save the new card first
-										return cardRepository.save(card)
-												.flatMap(savedCard -> deckRepository.save(deck.addCard(savedCard, count)));
-								}
-						});
-    });
-}
+					return cardRepository.findById(cardId)
+							.flatMap(maybeCard -> {
+									if (maybeCard.isDefined()) {
+											// Card exists, use the existing card
+											Card existingCard = maybeCard.get();
+											return deckRepository.save(deck.addCard(existingCard, count));
+									} else {
+											// Card does not exist, save the new card first
+											return cardRepository.save(card)
+													.flatMap(savedCard -> deckRepository.save(deck.addCard(savedCard, count)));
+									}
+							});
+			});
+		}
 
 		public Validation<Seq<String>, Deck> removeCardFromDeck(RemoveCardFromDeckCommand command) {
 			return deckRepository.findById(command.deckId()).flatMap(deck -> 
