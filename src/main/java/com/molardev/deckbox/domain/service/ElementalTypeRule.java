@@ -42,4 +42,12 @@ public class ElementalTypeRule implements IDeckValidationRule {
 	public Long getId() {
 		return id;
 	}
+
+	public List<ElementalType> getDisallowedTypes() {
+		return disallowedTypes;
+	}
+
+	public int getMaxElementalTypes() {
+		return maxElementalTypes;
+	}
 }

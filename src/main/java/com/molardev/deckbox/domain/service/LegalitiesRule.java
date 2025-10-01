@@ -29,4 +29,8 @@ public class LegalitiesRule implements IDeckValidationRule {
 	public Long getId() {
 		return id;
 	}
+
+	public List<Legality> getDisallowedLegalities() {
+		return disallowedLegalities;
+	}
 }

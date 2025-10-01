@@ -33,4 +33,12 @@ public class MaxCopiesRule implements IDeckValidationRule {
 		public Long getId() {
 			return id;
 		}
+
+		public int getMaxCopies() {
+			return maxCopies;
+		}
+
+		public CardType getCardType() {
+			return cardType;
+		}
 }
