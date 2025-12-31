@@ -45,7 +45,7 @@ public class DeckController {
 						deck -> ResponseEntity.ok(new DeckDto(
 								deck.getDeckReference().getId().toString(),
 								deck.getDeckReference().getName().getName(),
-								new ArrayList<>()
+								deck.getCardEntries().map(entry -> CardEntryDto.fromEntity(entry)).asJava()
 						))
 				);
 	}

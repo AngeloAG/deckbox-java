@@ -27,11 +27,7 @@ public class DeckTranslator {
 
 	public static Validation<Seq<String>, Card> toDomain(CardDto dto) {
 		Validation<Seq<String>, CardReference> cardReference = CardReference.create(dto.id, dto.name);
-		Validation<Seq<String>, CardClassification> cardClassification = CardType.fromString(dto.supertype).flatMap(type ->
-				Validation.sequence(
-						io.vavr.collection.List.ofAll(dto.subtypes).map(CardSubtype::fromString)
-				).flatMap(subtypes -> CardClassification.create(type, subtypes.toList()))
-		);
+		Validation<Seq<String>, CardClassification> cardClassification = toCardClassification(dto);
 		Validation<Seq<String>, Seq<Legality>> legalities = Validation.sequence(io.vavr.collection.List.ofAll(dto.legalities).map(Legality::fromString));
 		Validation<Seq<String>, Seq<ElementalType>> elementalTypes = Validation.sequence(io.vavr.collection.List.ofAll(dto.types).map(ElementalType::fromString));
 		Validation<Seq<String>, CardImageUrl> imageUrl = CardImageUrl.create(dto.image);
@@ -40,6 +36,14 @@ public class DeckTranslator {
 			.ap((cardRef, classif, legal, elemTypes, img) -> Card.create(cardRef, classif, legal.toList(), elemTypes.toList(), img))
 			.mapError(seqOfSeq -> seqOfSeq.flatMap(Function.identity()))
 			.flatMap(Function.identity());
+	}
+
+	private static Validation<Seq<String>, CardClassification> toCardClassification(CardDto dto) {
+		return CardType.fromString(dto.supertype).flatMap(type ->
+				Validation.sequence(
+						io.vavr.collection.List.ofAll(dto.subtypes).map(CardSubtype::fromString)
+				).flatMap(subtypes -> CardClassification.create(type, subtypes.toList()))
+		);
 	}
 
 	public static Validation<Seq<String>, CardEntry> toDomain(CardEntryDto dto) {
