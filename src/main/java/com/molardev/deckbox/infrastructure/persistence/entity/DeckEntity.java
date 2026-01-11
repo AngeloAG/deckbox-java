@@ -12,7 +12,7 @@ public class DeckEntity {
     private UUID id;
     private String name;
 
-		@OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+	@OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "deck_id")
     private List<CardEntryEntity> cardEntries = new ArrayList<>();
 
@@ -39,11 +39,11 @@ public class DeckEntity {
         this.name = name;
     }
 
-		public List<CardEntryEntity> getCardEntries() {
-				return cardEntries;
-		}
+    public List<CardEntryEntity> getCardEntries() {
+        return cardEntries;
+    }
 
-		public void setCardEntries(List<CardEntryEntity> cardEntries) {
-				this.cardEntries = cardEntries;
-		}
+    public void setCardEntries(List<CardEntryEntity> cardEntries) {
+        this.cardEntries = cardEntries;
+    }
 }
