@@ -10,12 +10,12 @@ import com.molardev.deckbox.application.common.commands.GetDeckByIdCommand;
 import com.molardev.deckbox.application.common.commands.RemoveCardFromDeckCommand;
 import com.molardev.deckbox.application.common.commands.UpdateCardCountCommand;
 import com.molardev.deckbox.application.service.DeckService;
+import com.molardev.deckbox.domain.errors.CustomError;
 import com.molardev.deckbox.infrastructure.controllers.dtos.CardEntryDto;
 import com.molardev.deckbox.infrastructure.controllers.dtos.CreateDeckRequest;
-import com.molardev.deckbox.infrastructure.controllers.dtos.DeckDto;
 import com.molardev.deckbox.infrastructure.controllers.translations.DeckTranslator;
 
-import java.util.ArrayList;
+import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
@@ -39,14 +39,16 @@ public class DeckController {
 
 	@PostMapping()
 	public ResponseEntity<Object> createDeck(@RequestBody CreateDeckRequest entity) {
-		return deckService.createDeck(new CreateDeckCommand(entity.getName()))
+		return deckService.createDeck(new CreateDeckCommand(entity.name))
 				.fold(
-						errors -> ResponseEntity.badRequest().body(errors.asJava()),
-						deck -> ResponseEntity.ok(new DeckDto(
-								deck.getDeckReference().getId().toString(),
-								deck.getDeckReference().getName().getName(),
-								deck.getCardEntries().map(entry -> CardEntryDto.fromEntity(entry)).asJava()
-						))
+						error -> switch (error) {
+							case CustomError.ValidationError(var errors) -> ResponseEntity.badRequest().body(Map.of("error", errors.asJava()));
+							case CustomError.RepositoryError(var message, var e) -> 
+                    ResponseEntity.internalServerError().body(Map.of("error", "An error occurred. Try again later"));
+              case CustomError.RehydrationError(var errors) -> 
+                    ResponseEntity.internalServerError().body(Map.of("error", "An error occurred. Try again later"));
+						},
+						deck -> ResponseEntity.ok(DeckTranslator.toDto(deck))
 				);
 	}
 	
@@ -54,32 +56,32 @@ public class DeckController {
 	public ResponseEntity<Object> getDeck(@PathVariable UUID deckId) {
 		return deckService.getDeckById(new GetDeckByIdCommand(deckId))
 				.fold(
-						errors -> ResponseEntity.badRequest().body(errors.asJava()),
-						deck -> ResponseEntity.ok(new DeckDto(
-								deck.getDeckReference().getId().toString(),
-								deck.getDeckReference().getName().getName(),
-								new ArrayList<>()
-						))
-				);
+						error -> switch (error) {
+              case CustomError.ValidationError(var errors) -> ResponseEntity.badRequest().body(Map.of("error", errors.asJava()));
+							case CustomError.RepositoryError(var message, var e) -> 
+                    ResponseEntity.internalServerError().body(Map.of("error", "An error occurred. Try again later"));
+              case CustomError.RehydrationError(var errors) -> 
+                    ResponseEntity.internalServerError().body(Map.of("error", "An error occurred. Try again later"));
+            },
+						deckOption -> {
+              return deckOption.isEmpty() ? ResponseEntity.notFound().build() 
+                : ResponseEntity.ok(DeckTranslator.toDto(deckOption.get()));
+            });
 	}
 
 	@GetMapping("/{deckId}/cards")
 	public ResponseEntity<Object> getDeckCards(@PathVariable UUID deckId) {
 		return deckService.getDeckByIdWithCardEntries(new GetDeckByIdCommand(deckId))
 				.fold(
-						errors -> ResponseEntity.badRequest().body(errors.asJava()),
-						deckMaybe -> {
-							if(deckMaybe.isDefined()) {
-								var deck = deckMaybe.get();
-								return ResponseEntity.ok(new DeckDto(
-									deck.getDeckReference().getId().toString(),
-									deck.getDeckReference().getName().getName(),
-									deck.getCardEntries().map(DeckTranslator::toDto).asJava()
-								));
-							} else {
-								return ResponseEntity.notFound().build();
-							}
-						}
+						error -> switch (error) {
+              case CustomError.ValidationError(var errors) -> ResponseEntity.badRequest().body(Map.of("error", errors.asJava()));
+							case CustomError.RepositoryError(var message, var e) -> 
+                    ResponseEntity.internalServerError().body(Map.of("error", "An error occurred. Try again later"));
+              case CustomError.RehydrationError(var errors) -> 
+                    ResponseEntity.internalServerError().body(Map.of("error", "An error occurred. Try again later"));
+            },
+						deckOption -> deckOption.isEmpty() ? ResponseEntity.notFound().build() 
+                : ResponseEntity.ok(DeckTranslator.toDto(deckOption.get()))
 				);
 	}
 
@@ -87,13 +89,15 @@ public class DeckController {
 	public ResponseEntity<Object> getAllDecks() {
 		return deckService.getAllDeckReferences()
 				.fold(
-						errors -> ResponseEntity.badRequest().body(errors.asJava()),
+						error -> switch (error) {
+              case CustomError.ValidationError(var errors) -> ResponseEntity.badRequest().body(Map.of("error", errors.asJava()));
+							case CustomError.RepositoryError(var message, var e) -> 
+                    ResponseEntity.internalServerError().body(Map.of("error", "An error occurred. Try again later"));
+              case CustomError.RehydrationError(var errors) -> 
+                    ResponseEntity.internalServerError().body(Map.of("error", "An error occurred. Try again later"));
+            },
 						decksReferences -> ResponseEntity.ok(decksReferences
-								.map(decksReference -> new DeckDto(
-										decksReference.getId().toString(),
-										decksReference.getName().getName(),
-										new ArrayList<>()
-								)).asJava()
+								.map(DeckTranslator::toDto).asJava()
 						)
 				);
 	}
@@ -102,7 +106,13 @@ public class DeckController {
 	public ResponseEntity<Object> deleteDeck(@PathVariable UUID deckId) {
 		return deckService.deleteDeckById(new DeleteDeckCommand(deckId))
 				.fold(
-						errors -> ResponseEntity.badRequest().body(errors.asJava()),
+						error -> switch (error) {
+              case CustomError.ValidationError(var errors) -> ResponseEntity.badRequest().body(Map.of("error", errors.asJava()));
+							case CustomError.RepositoryError(var message, var e) -> 
+                    ResponseEntity.internalServerError().body(Map.of("error", "An error occurred. Try again later"));
+              case CustomError.RehydrationError(var errors) -> 
+                    ResponseEntity.internalServerError().body(Map.of("error", "An error occurred. Try again later"));
+            },
 						v -> ResponseEntity.noContent().build()
 				);
 	}
@@ -114,12 +124,15 @@ public class DeckController {
 			errors -> ResponseEntity.badRequest().body(errors.asJava()),
 			cardEntry -> deckService.addCardToDeck(new AddCardToDeckCommand(deckId, cardEntry))
 				.fold(
-					serviceErrors -> ResponseEntity.badRequest().body(serviceErrors.asJava()),
-					updatedDeck -> ResponseEntity.ok(new DeckDto(
-						updatedDeck.getDeckReference().getId().toString(),
-						updatedDeck.getDeckReference().getName().getName(),
-						updatedDeck.getCardEntries().map(DeckTranslator::toDto).asJava()
-					))
+					error -> switch (error) {
+              case CustomError.ValidationError(var errors) -> ResponseEntity.badRequest().body(Map.of("error", errors.asJava()));
+							case CustomError.RepositoryError(var message, var e) -> 
+                    ResponseEntity.internalServerError().body(Map.of("error", "An error occurred. Try again later"));
+              case CustomError.RehydrationError(var errors) -> 
+                    ResponseEntity.internalServerError().body(Map.of("error", "An error occurred. Try again later"));
+            },
+					updatedDeckOption -> updatedDeckOption.isEmpty() ? ResponseEntity.notFound().build()
+            : ResponseEntity.ok(DeckTranslator.toDto(updatedDeckOption.get()))
 				)
 		);
 	}
@@ -128,8 +141,15 @@ public class DeckController {
 	public ResponseEntity<Object> removeCard(@PathVariable UUID deckId, @PathVariable String cardId) {
 		return deckService.removeCardFromDeck(new RemoveCardFromDeckCommand(deckId, cardId))
 			.fold(
-				errors -> ResponseEntity.badRequest().body(errors.asJava()),
-				deck -> ResponseEntity.ok(DeckTranslator.toDto(deck))
+				error -> switch (error) {
+              case CustomError.ValidationError(var errors) -> ResponseEntity.badRequest().body(Map.of("error", errors.asJava()));
+							case CustomError.RepositoryError(var message, var e) -> 
+                    ResponseEntity.internalServerError().body(Map.of("error", "An error occurred. Try again later"));
+              case CustomError.RehydrationError(var errors) -> 
+                    ResponseEntity.internalServerError().body(Map.of("error", "An error occurred. Try again later"));
+            },
+				deckOption -> deckOption.isEmpty() ? ResponseEntity.notFound().build() 
+                : ResponseEntity.ok(DeckTranslator.toDto(deckOption.get()))
 			);
 	}
 
@@ -137,8 +157,15 @@ public class DeckController {
 	public ResponseEntity<Object> updateCard(@PathVariable UUID deckId, @PathVariable String cardId, @RequestBody int count) {
 		return deckService.updateCardCountInDeck(new UpdateCardCountCommand(deckId, cardId, count))
 			.fold(
-				errors -> ResponseEntity.badRequest().body(errors.asJava()),
-				deck -> ResponseEntity.ok(DeckTranslator.toDto(deck))
+				error -> switch (error) {
+              case CustomError.ValidationError(var errors) -> ResponseEntity.badRequest().body(Map.of("error", errors.asJava()));
+							case CustomError.RepositoryError(var message, var e) -> 
+                    ResponseEntity.internalServerError().body(Map.of("error", "An error occurred. Try again later"));
+              case CustomError.RehydrationError(var errors) -> 
+                    ResponseEntity.internalServerError().body(Map.of("error", "An error occurred. Try again later"));
+            },
+				deckOption -> deckOption.isEmpty() ? ResponseEntity.notFound().build() 
+                : ResponseEntity.ok(DeckTranslator.toDto(deckOption.get()))
 			);
 	}
 }

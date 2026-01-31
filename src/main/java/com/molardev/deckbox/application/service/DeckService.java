@@ -6,22 +6,18 @@ import com.molardev.deckbox.application.common.commands.DeleteDeckCommand;
 import com.molardev.deckbox.application.common.commands.GetDeckByIdCommand;
 import com.molardev.deckbox.application.common.commands.RemoveCardFromDeckCommand;
 import com.molardev.deckbox.application.common.commands.UpdateCardCountCommand;
-import com.molardev.deckbox.application.common.commands.ValidateDeckCommand;
 import com.molardev.deckbox.application.common.interfaces.ICardRepository;
 import com.molardev.deckbox.application.common.interfaces.IDeckRepository;
-import com.molardev.deckbox.application.common.interfaces.IFormatRepository;
 import com.molardev.deckbox.domain.entity.Deck;
-import com.molardev.deckbox.domain.service.DeckValidator;
+import com.molardev.deckbox.domain.errors.CustomError;
 import com.molardev.deckbox.domain.valueobject.Card;
 import com.molardev.deckbox.domain.valueobject.CardCount;
-import com.molardev.deckbox.domain.valueobject.DeckName;
+import com.molardev.deckbox.domain.valueobject.CardEntry;
 import com.molardev.deckbox.domain.valueobject.DeckReference;
 
-import io.vavr.collection.List;
 import io.vavr.collection.Seq;
+import io.vavr.control.Either;
 import io.vavr.control.Option;
-import io.vavr.control.Validation;
-
 import org.springframework.stereotype.Service;
 
 @Service
@@ -36,63 +32,91 @@ public class DeckService {
         // this.formatRepository = formatRepository;
     }
 
-    public Validation<Seq<String>, Deck> createDeck(CreateDeckCommand command) {
-			return DeckName.create(command.name())
-				.flatMap(DeckReference::create)
-        .flatMap(deckRef -> Deck.create(deckRef, List.of()))
-				.flatMap(deckRepository::save);
+    public Either<CustomError, Deck> createDeck(CreateDeckCommand command) {
+			return Deck.create(command.name())
+				.toEither()
+				.mapLeft(errors -> (CustomError) new CustomError.ValidationError(errors))
+				.flatMap(deck -> deckRepository.save(deck));
 		}
 
-		public Validation<Seq<String>, Deck> addCardToDeck(AddCardToDeckCommand command) {
-			return deckRepository.findById(command.deckId()).flatMap(deck -> {
+		public Either<CustomError, Option<Deck>> addCardToDeck(AddCardToDeckCommand command) {
+			return deckRepository.findById(command.deckId()).flatMap(deckOption -> {
 					Card card = command.cardEntry().getCard();
 					CardCount count = command.cardEntry().getCount();
 					String cardId = card.getCardReference().getCardId();
 
+          if(deckOption.isEmpty()) {
+            return Either.right(Option.none());
+          }
+
 					return cardRepository.findById(cardId)
+              .toEither()
+              .mapLeft(errors -> (CustomError) new CustomError.RehydrationError(errors))
 							.flatMap(maybeCard -> {
 									if (maybeCard.isDefined()) {
 											// Card exists, use the existing card
 											Card existingCard = maybeCard.get();
-											return deckRepository.save(deck.addCard(existingCard, count));
+											return deckRepository.save(deckOption.get().addCard(existingCard, count)).map(Option::some);
 									} else {
 											// Card does not exist, save the new card first
 											return cardRepository.save(card)
-													.flatMap(savedCard -> deckRepository.save(deck.addCard(savedCard, count)));
+                        .toEither()
+                        .mapLeft(errors -> (CustomError) new CustomError.RehydrationError(errors))
+											  .flatMap(savedCard -> deckRepository.save(deckOption.get().addCard(savedCard, count)).map(Option::some));
 									}
 							});
 			});
 		}
 
-		public Validation<Seq<String>, Deck> removeCardFromDeck(RemoveCardFromDeckCommand command) {
-			return deckRepository.findById(command.deckId()).flatMap(deck -> 
-				deck.findCard(command.cardId())
-					.map(cardEntry -> deckRepository.save(deck.removeCard(cardEntry)))
-					.getOrElse(Validation.invalid(io.vavr.collection.List.of("Card not found in deck")))
+		public Either<CustomError, Option<Deck>> removeCardFromDeck(RemoveCardFromDeckCommand command) {
+			return deckRepository.findById(command.deckId()).flatMap(deckOption -> 
+				{
+          if(deckOption.isEmpty()) {
+            return Either.right(Option.none());
+          }
+          Option<CardEntry> cardEntryOption = deckOption.get().findCard(command.cardId());
+          
+          if(cardEntryOption.isEmpty()) {
+            return Either.right(deckOption);
+          }
+
+          return deckRepository.save(deckOption.get().removeCard(cardEntryOption.get())).map(Option::some);
+        }
 			);
 		}
 
-		public Validation<Seq<String>, Deck> updateCardCountInDeck(UpdateCardCountCommand command) {
+		public Either<CustomError, Option<Deck>> updateCardCountInDeck(UpdateCardCountCommand command) {
 			return CardCount.create(command.count())
+        .toEither()
+        .mapLeft(errors -> (CustomError) new CustomError.ValidationError(errors))
 				.flatMap(count -> deckRepository.findById(command.deckId())
-					.flatMap(deck -> deck.findCard(command.cardId())
-						.map(oldEntry -> deckRepository.save(deck.updateCard(oldEntry, oldEntry.withCount(count))))
-						.getOrElse(Validation.invalid(io.vavr.collection.List.of("Card not found in deck")))));
+					.flatMap(deckOption -> {
+            if(deckOption.isEmpty()) {
+              return Either.right(Option.none());
+            }
+            Option<CardEntry> cardEntryOption = deckOption.get().findCard(command.cardId());
+
+            if(cardEntryOption.isEmpty()) {
+              return Either.right(deckOption);
+            }
+
+            return deckRepository.save(deckOption.get().updateCard(cardEntryOption.get(), cardEntryOption.get().withCount(count))).map(Option::some);
+          }));
 		}
 
-		public Validation<Seq<String>, Deck> getDeckById(GetDeckByIdCommand command) {
+		public Either<CustomError, Option<Deck>> getDeckById(GetDeckByIdCommand command) {
 			return deckRepository.findById(command.id());
 		}
 
-		public Validation<Seq<String>, Option<Deck>> getDeckByIdWithCardEntries(GetDeckByIdCommand command) {
+		public Either<CustomError, Option<Deck>> getDeckByIdWithCardEntries(GetDeckByIdCommand command) {
 			return deckRepository.findByIdWithCardEntries(command.id());
 		}
 
-		public Validation<Seq<String>, Seq<DeckReference>> getAllDeckReferences() {
+		public Either<CustomError, Seq<DeckReference>> getAllDeckReferences() {
 			return deckRepository.findAllDeckReferences();
 		}
 		
-		public Validation<Seq<String>, Void> deleteDeckById(DeleteDeckCommand command) {
+		public Either<CustomError, Void> deleteDeckById(DeleteDeckCommand command) {
 			return deckRepository.deleteById(command.id());
 		}
 

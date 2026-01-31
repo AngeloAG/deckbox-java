@@ -24,6 +24,26 @@ public class DeckSizeRule implements IDeckValidationRule {
 		return Validation.valid(deck);
 	}
 
+	public static Validation<Seq<String>, DeckSizeRule> create(Long id, int maxCount) {
+		List<String> errors = io.vavr.collection.List.of();
+		if(id == null) {
+			errors = errors.append("Id of rule cannot be null");
+		}
+		if(maxCount < 0) {
+			errors = errors.append("The mac count cannot be less than zero");
+		}
+
+		return errors.isEmpty() ? Validation.valid(new DeckSizeRule(id, maxCount)) : Validation.invalid(errors);
+	}
+
+	public static Validation<Seq<String>, DeckSizeRule> create(int maxCount) {
+		List<String> errors = io.vavr.collection.List.of();
+		if(maxCount < 0) {
+			errors = errors.append("The max count cannot be less than zero");
+		}
+		return errors.isEmpty() ? Validation.valid(new DeckSizeRule(null, maxCount)) : Validation.invalid(errors);
+	}
+
 	public Long getId() {
 		return id;
 	}

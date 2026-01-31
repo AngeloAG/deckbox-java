@@ -1,5 +1,6 @@
 package com.molardev.deckbox.infrastructure.controllers.translations;
 
+import java.util.ArrayList;
 import java.util.function.Function;
 
 import com.molardev.deckbox.domain.entity.Deck;
@@ -13,6 +14,7 @@ import com.molardev.deckbox.domain.valueobject.CardCount;
 import com.molardev.deckbox.domain.valueobject.CardEntry;
 import com.molardev.deckbox.domain.valueobject.CardImageUrl;
 import com.molardev.deckbox.domain.valueobject.CardReference;
+import com.molardev.deckbox.domain.valueobject.DeckReference;
 import com.molardev.deckbox.infrastructure.controllers.dtos.CardDto;
 import com.molardev.deckbox.infrastructure.controllers.dtos.CardEntryDto;
 import com.molardev.deckbox.infrastructure.controllers.dtos.DeckDto;
@@ -76,4 +78,11 @@ public class DeckTranslator {
 			deck.getCardEntries().map(DeckTranslator::toDto).asJava()
 		);
 	}
+
+  public static DeckDto toDto(DeckReference reference) {
+    return new DeckDto(reference.getId().toString(),
+									reference.getName().getName(),
+									new ArrayList<>()
+    );
+  }
 }

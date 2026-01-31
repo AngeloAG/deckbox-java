@@ -1,10 +1,12 @@
 package com.molardev.deckbox.domain.entity;
 
 import java.util.Objects;
+import java.util.UUID;
 
 import com.molardev.deckbox.domain.valueobject.Card;
 import com.molardev.deckbox.domain.valueobject.CardCount;
 import com.molardev.deckbox.domain.valueobject.CardEntry;
+import com.molardev.deckbox.domain.valueobject.DeckName;
 import com.molardev.deckbox.domain.valueobject.DeckReference;
 
 import io.vavr.collection.List;
@@ -29,6 +31,12 @@ public class Deck {
 		}
 
 		return Validation.valid(new Deck(deckReference, cardEntries));
+	}
+
+	public static Validation<Seq<String>, Deck> create(String name) {
+		return DeckName.create(name)
+				.flatMap(DeckReference::create)
+        .map(deckRef -> new Deck(deckRef, List.of()));
 	}
 
 	public DeckReference getDeckReference() {

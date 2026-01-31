@@ -26,6 +26,30 @@ public class LegalitiesRule implements IDeckValidationRule {
 		return errors.isEmpty() ? Validation.valid(deck) : Validation.invalid(errors);
 	}
 
+
+	public static Validation<Seq<String>, LegalitiesRule> create(Long id, List<String> disallowedLegalities) {
+		Seq<String> errors = io.vavr.collection.List.of();
+		if(id == null) {
+			errors = errors.append("Id of the legalities rule cannot be null");
+		}
+		var legalitiesValidation = Legality.fromStrings(disallowedLegalities);
+		if(legalitiesValidation.isInvalid()) {
+			errors = errors.appendAll(legalitiesValidation.getError());
+		}
+
+		return errors.isEmpty() ? Validation.valid(new LegalitiesRule(id, legalitiesValidation.get())) : Validation.invalid(errors);
+	}
+
+	public static Validation<Seq<String>, LegalitiesRule> create(List<String> disallowedLegalities) {
+		Seq<String> errors = io.vavr.collection.List.of();
+		var legalitiesValidation = Legality.fromStrings(disallowedLegalities);
+		if(legalitiesValidation.isInvalid()) {
+			errors = errors.appendAll(legalitiesValidation.getError());
+		}
+
+		return errors.isEmpty() ? Validation.valid(new LegalitiesRule(null, legalitiesValidation.get())) : Validation.invalid(errors);
+	}
+
 	public Long getId() {
 		return id;
 	}

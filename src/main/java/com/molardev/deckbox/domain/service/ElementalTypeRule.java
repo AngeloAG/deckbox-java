@@ -39,6 +39,33 @@ public class ElementalTypeRule implements IDeckValidationRule {
 		return errors.isEmpty() ? Validation.valid(deck) : Validation.invalid(errors);
 	}
 
+	public static Validation<Seq<String>, ElementalTypeRule> create(Long id, List<String> disallowedTypes, int maxElementalTypes) {
+		Seq<String> errors = io.vavr.collection.List.of();
+		if(id == null) {
+			errors = errors.append("The Id of the elemental type rule cannot be null");
+		}
+		if(maxElementalTypes < 0) {
+			errors = errors.append("The max elemental types cannot be less than zero");
+		}
+		var disallowedTypesValidation = ElementalType.fromStrings(disallowedTypes);
+		if(disallowedTypesValidation.isInvalid()) {
+			errors = errors.appendAll(disallowedTypesValidation.getError());
+		}
+		return errors.isEmpty() ? Validation.valid(new ElementalTypeRule(id, disallowedTypesValidation.get(), maxElementalTypes)) : Validation.invalid(errors);
+	}
+
+	public static Validation<Seq<String>, ElementalTypeRule> create(List<String> disallowedTypes, int maxElementalTypes) {
+		Seq<String> errors = io.vavr.collection.List.of();
+		if(maxElementalTypes < 0) {
+			errors = errors.append("The max elemental types cannot be less than zero");
+		}
+		var disallowedTypesValidation = ElementalType.fromStrings(disallowedTypes);
+		if(disallowedTypesValidation.isInvalid()) {
+			errors = errors.appendAll(disallowedTypesValidation.getError());
+		}
+		return errors.isEmpty() ? Validation.valid(new ElementalTypeRule(null, disallowedTypesValidation.get(), maxElementalTypes)) : Validation.invalid(errors);
+	}
+
 	public Long getId() {
 		return id;
 	}
