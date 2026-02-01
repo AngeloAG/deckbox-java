@@ -50,8 +50,6 @@ public class DeckService {
           }
 
 					return cardRepository.findById(cardId)
-              .toEither()
-              .mapLeft(errors -> (CustomError) new CustomError.RehydrationError(errors))
 							.flatMap(maybeCard -> {
 									if (maybeCard.isDefined()) {
 											// Card exists, use the existing card
@@ -60,8 +58,6 @@ public class DeckService {
 									} else {
 											// Card does not exist, save the new card first
 											return cardRepository.save(card)
-                        .toEither()
-                        .mapLeft(errors -> (CustomError) new CustomError.RehydrationError(errors))
 											  .flatMap(savedCard -> deckRepository.save(deckOption.get().addCard(savedCard, count)).map(Option::some));
 									}
 							});

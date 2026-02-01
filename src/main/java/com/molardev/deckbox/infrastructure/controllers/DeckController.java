@@ -13,6 +13,7 @@ import com.molardev.deckbox.application.service.DeckService;
 import com.molardev.deckbox.domain.errors.CustomError;
 import com.molardev.deckbox.infrastructure.controllers.dtos.CardEntryDto;
 import com.molardev.deckbox.infrastructure.controllers.dtos.CreateDeckRequest;
+import com.molardev.deckbox.infrastructure.controllers.dtos.UpdateCardCountRequest;
 import com.molardev.deckbox.infrastructure.controllers.translations.DeckTranslator;
 
 import java.util.Map;
@@ -154,8 +155,8 @@ public class DeckController {
 	}
 
 	@PutMapping("/{deckId}/cards/{cardId}")
-	public ResponseEntity<Object> updateCard(@PathVariable UUID deckId, @PathVariable String cardId, @RequestBody int count) {
-		return deckService.updateCardCountInDeck(new UpdateCardCountCommand(deckId, cardId, count))
+	public ResponseEntity<Object> updateCard(@PathVariable UUID deckId, @PathVariable String cardId, @RequestBody UpdateCardCountRequest request) {
+		return deckService.updateCardCountInDeck(new UpdateCardCountCommand(deckId, cardId, request.count()))
 			.fold(
 				error -> switch (error) {
               case CustomError.ValidationError(var errors) -> ResponseEntity.badRequest().body(Map.of("error", errors.asJava()));

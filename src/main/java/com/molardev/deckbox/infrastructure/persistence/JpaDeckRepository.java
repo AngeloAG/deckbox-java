@@ -33,7 +33,7 @@ public class JpaDeckRepository implements IDeckRepository {
     DeckEntity saved = deckJpaRepository.save(entity);
     return DeckTranslator.toDomain(saved)
 			.toEither()
-			.mapLeft(CustomError.RehydrationError::new);
+			.mapLeft(errors -> (CustomError) new CustomError.RehydrationError(errors));
 	}
 
 	@Override
