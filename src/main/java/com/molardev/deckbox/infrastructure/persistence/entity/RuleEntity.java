@@ -1,30 +1,28 @@
 package com.molardev.deckbox.infrastructure.persistence.entity;
 
 import java.util.List;
+import java.util.UUID;
 
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 
 @Entity
 public class RuleEntity {
 	
 	@Id
-	@GeneratedValue(strategy=GenerationType.AUTO)
-	private Long id;
+	private UUID id;
 	private String ruleType;
 	private List<String> parameters;
 
 	protected RuleEntity() {}
 
-	public RuleEntity(Long id, String ruleType, List<String> parameters) {
+	public RuleEntity(UUID id, String ruleType, List<String> parameters) {
 		this.id = id;
 		this.ruleType = ruleType;
 		this.parameters = parameters;
 	}
 
-	public Long getId() {
+	public UUID getId() {
 		return id;
 	}
 

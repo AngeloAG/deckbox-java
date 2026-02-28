@@ -1,57 +1,84 @@
 package com.molardev.deckbox.infrastructure.persistence;
 
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.stereotype.Repository;
 
 import com.molardev.deckbox.application.common.interfaces.IFormatRepository;
 import com.molardev.deckbox.domain.entity.Format;
+import com.molardev.deckbox.domain.errors.CustomError;
 import com.molardev.deckbox.domain.valueobject.FormatReference;
+import com.molardev.deckbox.infrastructure.persistence.entity.FormatEntity;
 import com.molardev.deckbox.infrastructure.persistence.jpa.FormatJpaRepository;
-import com.molardev.deckbox.infrastructure.persistence.jpa.RuleJpaRepository;
 import com.molardev.deckbox.infrastructure.persistence.translations.RuleTranslator;
 
+import io.vavr.collection.List;
 import io.vavr.collection.Seq;
-import io.vavr.control.Validation;
+import io.vavr.control.Either;
+import io.vavr.control.Option;
 
 @Repository
 public class JpaFormatRepository implements IFormatRepository {
   private final FormatJpaRepository formatRepository;
-  private final RuleJpaRepository ruleRepository;
 
-  public JpaFormatRepository(FormatJpaRepository formatRepo, RuleJpaRepository ruleRepo) {
+  public JpaFormatRepository(FormatJpaRepository formatRepo) {
     this.formatRepository = formatRepo;
-    this.ruleRepository = ruleRepo;
   }
 
   @Override
-  public Validation<Seq<String>, Format> save(Format deckFormat) {
+  public Either<CustomError, Format> save(Format deckFormat) {
     var formatEntity = RuleTranslator.toEntity(deckFormat);
     var saved = formatRepository.save(formatEntity);
-    return Validation.valid(RuleTranslator.rehydrateFormat(saved));
+    return Either.right(RuleTranslator.rehydrateFormat(saved));
   }
 
   @Override
-  public Validation<Seq<String>, Format> findById(UUID id) {
-    return formatRepository.findById(id)
-      .<Validation<Seq<String>, Format>>map(format -> Validation.valid(RuleTranslator.rehydrateFormat(format)))
-      .orElseGet(() -> Validation.invalid(io.vavr.collection.List.of("Format not found")));
+  public Either<CustomError, Option<Format>> findById(UUID id) {
+    try {
+      return formatRepository.findById(id)
+        .<Either<CustomError, Option<Format>>>map(format -> Either.right(Option.some(RuleTranslator.rehydrateFormat(format))))
+        .orElseGet(() -> Either.right(Option.none()));
+    } catch (IllegalArgumentException e) {
+      return Either.left((CustomError) new CustomError.RepositoryError("Failed to retrieve format. Id is null", e));
+    }
   }
 
   @Override
-  public Validation<Seq<String>, Seq<FormatReference>> findAllFormats() {
+  public Either<CustomError, Seq<FormatReference>> findAllFormats() {
     var formatEntities = formatRepository.findAll();
     var formatReferences = io.vavr.collection.List.ofAll(formatEntities)
       .map(RuleTranslator::rehydrateFormat)
       .map(Format::getFormatReference);
-    return Validation.valid(formatReferences);
+    return Either.right(formatReferences);
   }
 
   @Override
-  public Validation<Seq<String>, Void> deleteById(UUID id) {
-    return formatRepository.findById(id).map(format -> {
+  public Either<CustomError, Void> deleteById(UUID id) {
+    try {
+      Optional<FormatEntity> formatOptional = formatRepository.findById(id);
+      if(formatOptional.isEmpty()) {
+        return Either.left((CustomError) new CustomError.ValidationError(List.of("Format id not found")));
+      }
+
       formatRepository.deleteById(id);
-      return Validation.<Seq<String>, Void>valid(null);
-    }).orElseGet(() -> Validation.invalid(io.vavr.collection.List.of("Format not found with id " + id)));
+      return Either.right(null);
+    } catch (Exception e) {
+      return Either.left((CustomError) new CustomError.RepositoryError("Failed to delete format", e));
+    }
+  }
+
+  @Override
+  public Either<CustomError, Option<Format>> findByIdWithRules(UUID id) {
+    try {
+      Optional<FormatEntity> formatOptional = formatRepository.findByIdWithRules(id);
+      if(formatOptional.isEmpty()) {
+        return Either.right(Option.none());
+      }
+      return Either.right(Option.some(RuleTranslator.rehydrateFormat(formatOptional.get())));
+
+    } catch (Exception e) {
+      return Either.left((CustomError) new CustomError.RepositoryError("Failed to retrieve format. Id is null", e));
+    }
   }
 }

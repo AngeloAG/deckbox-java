@@ -1,5 +1,7 @@
 package com.molardev.deckbox.domain.service;
 
+import java.util.UUID;
+
 import com.molardev.deckbox.domain.entity.Deck;
 import com.molardev.deckbox.domain.enums.Legality;
 
@@ -8,10 +10,10 @@ import io.vavr.collection.Seq;
 import io.vavr.control.Validation;
 
 public class LegalitiesRule implements IDeckValidationRule {
-	private final Long id;
+	private final UUID id;
 	private final List<Legality> disallowedLegalities;
 
-	public LegalitiesRule(Long id, List<Legality> disallowedLegalities) {
+	public LegalitiesRule(UUID id, List<Legality> disallowedLegalities) {
 		this.id = id;
 		this.disallowedLegalities = disallowedLegalities;
 	}
@@ -27,7 +29,7 @@ public class LegalitiesRule implements IDeckValidationRule {
 	}
 
 
-	public static Validation<Seq<String>, LegalitiesRule> create(Long id, List<String> disallowedLegalities) {
+	public static Validation<Seq<String>, LegalitiesRule> create(UUID id, List<String> disallowedLegalities) {
 		Seq<String> errors = io.vavr.collection.List.of();
 		if(id == null) {
 			errors = errors.append("Id of the legalities rule cannot be null");
@@ -47,10 +49,10 @@ public class LegalitiesRule implements IDeckValidationRule {
 			errors = errors.appendAll(legalitiesValidation.getError());
 		}
 
-		return errors.isEmpty() ? Validation.valid(new LegalitiesRule(null, legalitiesValidation.get())) : Validation.invalid(errors);
+		return errors.isEmpty() ? Validation.valid(new LegalitiesRule(UUID.randomUUID(), legalitiesValidation.get())) : Validation.invalid(errors);
 	}
 
-	public Long getId() {
+	public UUID getId() {
 		return id;
 	}
 

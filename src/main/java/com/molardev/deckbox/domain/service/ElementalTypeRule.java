@@ -1,5 +1,7 @@
 package com.molardev.deckbox.domain.service;
 
+import java.util.UUID;
+
 import com.molardev.deckbox.domain.entity.Deck;
 import com.molardev.deckbox.domain.enums.ElementalType;
 import io.vavr.collection.List;
@@ -7,11 +9,11 @@ import io.vavr.collection.Seq;
 import io.vavr.control.Validation;
 
 public class ElementalTypeRule implements IDeckValidationRule {
-	private final Long id;
+	private final UUID id;
 	private final List<ElementalType> disallowedTypes;
 	private final int maxElementalTypes;
 
-	public ElementalTypeRule(Long id, List<ElementalType> disallowedTypes, int maxElementalTypes) {
+	public ElementalTypeRule(UUID id, List<ElementalType> disallowedTypes, int maxElementalTypes) {
 		this.id = id;
 		this.disallowedTypes = disallowedTypes;
 		this.maxElementalTypes = maxElementalTypes;
@@ -39,7 +41,7 @@ public class ElementalTypeRule implements IDeckValidationRule {
 		return errors.isEmpty() ? Validation.valid(deck) : Validation.invalid(errors);
 	}
 
-	public static Validation<Seq<String>, ElementalTypeRule> create(Long id, List<String> disallowedTypes, int maxElementalTypes) {
+	public static Validation<Seq<String>, ElementalTypeRule> create(UUID id, List<String> disallowedTypes, int maxElementalTypes) {
 		Seq<String> errors = io.vavr.collection.List.of();
 		if(id == null) {
 			errors = errors.append("The Id of the elemental type rule cannot be null");
@@ -63,10 +65,10 @@ public class ElementalTypeRule implements IDeckValidationRule {
 		if(disallowedTypesValidation.isInvalid()) {
 			errors = errors.appendAll(disallowedTypesValidation.getError());
 		}
-		return errors.isEmpty() ? Validation.valid(new ElementalTypeRule(null, disallowedTypesValidation.get(), maxElementalTypes)) : Validation.invalid(errors);
+		return errors.isEmpty() ? Validation.valid(new ElementalTypeRule(UUID.randomUUID(), disallowedTypesValidation.get(), maxElementalTypes)) : Validation.invalid(errors);
 	}
 
-	public Long getId() {
+	public UUID getId() {
 		return id;
 	}
 

@@ -1,8 +1,6 @@
 package com.molardev.deckbox.domain.entity;
 
 import java.util.Objects;
-import java.util.UUID;
-
 import com.molardev.deckbox.domain.valueobject.Card;
 import com.molardev.deckbox.domain.valueobject.CardCount;
 import com.molardev.deckbox.domain.valueobject.CardEntry;

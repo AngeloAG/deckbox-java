@@ -1,5 +1,7 @@
 package com.molardev.deckbox.domain.service;
 
+import java.util.UUID;
+
 import com.molardev.deckbox.domain.entity.Deck;
 import com.molardev.deckbox.domain.enums.CardType;
 import com.molardev.deckbox.domain.valueobject.CardEntry;
@@ -9,11 +11,11 @@ import io.vavr.collection.Seq;
 import io.vavr.control.Validation;
 
 public class MaxCopiesRule implements IDeckValidationRule {
-		private final Long id;
+		private final UUID id;
     private final int maxCopies;
 		private final CardType cardType;
 
-    public MaxCopiesRule(Long id, int maxCopies, CardType cardType) {
+    public MaxCopiesRule(UUID id, int maxCopies, CardType cardType) {
 			this.id = id;
 			this.maxCopies = maxCopies;
 			this.cardType = cardType;
@@ -30,7 +32,7 @@ public class MaxCopiesRule implements IDeckValidationRule {
         return errors.isEmpty() ? Validation.valid(deck) : Validation.invalid(errors);
     }
 
-		public static Validation<Seq<String>, MaxCopiesRule> create(Long id, int maxCopies, String cardType) {
+		public static Validation<Seq<String>, MaxCopiesRule> create(UUID id, int maxCopies, String cardType) {
 			Seq<String> errors = io.vavr.collection.List.of();
 			if(id == null) {
 				errors = errors.append("The id of the MaxCopiesRule cannot be null");
@@ -54,10 +56,10 @@ public class MaxCopiesRule implements IDeckValidationRule {
 			if(cardTypeValidation.isInvalid()) {
 				errors = errors.appendAll(cardTypeValidation.getError());
 			}
-			return errors.isEmpty() ? Validation.valid(new MaxCopiesRule(null, maxCopies, cardTypeValidation.get())) : Validation.invalid(errors); 
+			return errors.isEmpty() ? Validation.valid(new MaxCopiesRule(UUID.randomUUID(), maxCopies, cardTypeValidation.get())) : Validation.invalid(errors); 
 		}
 
-		public Long getId() {
+		public UUID getId() {
 			return id;
 		}
 

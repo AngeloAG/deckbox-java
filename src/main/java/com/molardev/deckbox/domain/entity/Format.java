@@ -8,6 +8,7 @@ import io.vavr.collection.Seq;
 import io.vavr.control.Validation;
 
 import java.util.Objects;
+import java.util.UUID;
 
 public class Format {
     private final FormatReference formatReference;
@@ -30,6 +31,11 @@ public class Format {
 			return Validation.valid(new Format(formatReference, rules));
 		}
 
+    public static Validation<Seq<String>, Format> create(String name, String description) {
+      return FormatReference.create(name, description)
+        .map(formatReference -> new Format(formatReference, List.empty()));
+    }
+
 		public FormatReference getFormatReference() {
 				return formatReference;
 		}
@@ -38,16 +44,18 @@ public class Format {
         return rules;
     }
 
-    public Format addRule(IDeckValidationRule rule) {
-        return new Format(formatReference, rules.append(rule));
+    public Format removeRule(UUID ruleId) {
+        return new Format(formatReference, rules.filter(rule -> !rule.getId().equals(ruleId)));
     }
 
-    public Format removeRule(IDeckValidationRule rule) {
-        return new Format(formatReference, rules.remove(rule));
+    public Format updateRule(UUID ruleId, IDeckValidationRule newRule) {
+        return new Format(formatReference, 
+            rules.filter(rule -> !rule.getId().equals(ruleId)).append(newRule)
+        );
     }
 
-    public Format updateRule(IDeckValidationRule oldRule, IDeckValidationRule newRule) {
-        return new Format(formatReference, rules.remove(oldRule).append(newRule));
+    public boolean hasRule(UUID ruleId) {
+        return rules.exists(rule -> rule.getId().equals(ruleId));
     }
 
     @Override

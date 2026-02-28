@@ -1,6 +1,7 @@
 package com.molardev.deckbox.infrastructure.persistence.translations;
 
 import java.util.List;
+import java.util.UUID;
 
 import com.molardev.deckbox.domain.entity.Format;
 import com.molardev.deckbox.domain.enums.CardType;
@@ -59,7 +60,7 @@ public class RuleTranslator {
 	}
 
 	public static ElementalTypeRule toDomainElementalTypeRule(RuleEntity rule) {
-		Long id = rule.getId();
+		UUID id = rule.getId();
 		String[] typesArray = rule.getParameters().get(0).split(",");
 		int maxElementalTypes = Integer.parseInt(rule.getParameters().get(1));
 		return ElementalType.fromStrings(io.vavr.collection.List.of(typesArray))
@@ -67,7 +68,7 @@ public class RuleTranslator {
 	}
 
 	public static LegalitiesRule rehydrateLegalitiesRule(RuleEntity rule) {
-		Long id = rule.getId();
+		UUID id = rule.getId();
 		String[] disallowedLegalitiesString = rule.getParameters().get(0).split(",");
 		return Legality.fromStrings(io.vavr.collection.List.of(disallowedLegalitiesString))
 			.fold(ignore -> new LegalitiesRule(id, io.vavr.collection.List.empty()), 
@@ -75,7 +76,7 @@ public class RuleTranslator {
 	}
 
 	public static MaxCopiesRule rehydrateMaxCopiesRule(RuleEntity rule) {
-		Long id = rule.getId();
+		UUID id = rule.getId();
 		CardType type = CardType.fromString(rule.getParameters().get(1)).get();
 		return new MaxCopiesRule(id, Integer.parseInt(rule.getParameters().get(0)), type);
 	}

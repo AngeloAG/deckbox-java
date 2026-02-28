@@ -2,6 +2,7 @@ package com.molardev.deckbox.infrastructure.controllers.translations;
 
 import java.util.Map;
 
+import com.molardev.deckbox.domain.entity.Format;
 import com.molardev.deckbox.domain.enums.ElementalType;
 import com.molardev.deckbox.domain.enums.Legality;
 import com.molardev.deckbox.domain.service.DeckSizeRule;
@@ -9,6 +10,8 @@ import com.molardev.deckbox.domain.service.ElementalTypeRule;
 import com.molardev.deckbox.domain.service.IDeckValidationRule;
 import com.molardev.deckbox.domain.service.LegalitiesRule;
 import com.molardev.deckbox.domain.service.MaxCopiesRule;
+import com.molardev.deckbox.domain.valueobject.FormatReference;
+import com.molardev.deckbox.infrastructure.controllers.dtos.FormatDto;
 import com.molardev.deckbox.infrastructure.controllers.dtos.RuleDto;
 import com.molardev.deckbox.infrastructure.persistence.enums.RuleType;
 
@@ -124,5 +127,23 @@ public class RuleTranslator {
       case LEGALITY -> toLegalitiesRule(rule).map(IDeckValidationRule.class::cast);
       case MAX_COPIES -> toMaxCopiesRule(rule).map(IDeckValidationRule.class::cast);
     };
+  }
+
+  public static FormatDto toDto(Format format) {
+    return new FormatDto(
+      format.getFormatReference().getId().toString(),
+      format.getFormatReference().getName(),
+      format.getFormatReference().getDescription(),
+      format.getRules().map(rule -> RuleTranslator.toDto(rule)).asJava()
+    );
+  }
+
+  public static FormatDto toDto(FormatReference formatRef) {
+    return new FormatDto(
+      formatRef.getId().toString(),
+      formatRef.getName(),
+      formatRef.getDescription(),
+      java.util.List.of()
+    );
   }
 }

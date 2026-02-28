@@ -1,5 +1,7 @@
 package com.molardev.deckbox.domain.service;
 
+import java.util.UUID;
+
 import com.molardev.deckbox.domain.entity.Deck;
 
 import io.vavr.collection.List;
@@ -7,10 +9,10 @@ import io.vavr.collection.Seq;
 import io.vavr.control.Validation;
 
 public class DeckSizeRule implements IDeckValidationRule {
-	private final Long id;
+	private final UUID id;
 	private final int maxCount;
 
-	public DeckSizeRule(Long id, int maxCount) {
+	public DeckSizeRule(UUID id, int maxCount) {
 		this.id = id;
 		this.maxCount = maxCount;
 	}
@@ -24,7 +26,7 @@ public class DeckSizeRule implements IDeckValidationRule {
 		return Validation.valid(deck);
 	}
 
-	public static Validation<Seq<String>, DeckSizeRule> create(Long id, int maxCount) {
+	public static Validation<Seq<String>, DeckSizeRule> create(UUID id, int maxCount) {
 		List<String> errors = io.vavr.collection.List.of();
 		if(id == null) {
 			errors = errors.append("Id of rule cannot be null");
@@ -41,10 +43,10 @@ public class DeckSizeRule implements IDeckValidationRule {
 		if(maxCount < 0) {
 			errors = errors.append("The max count cannot be less than zero");
 		}
-		return errors.isEmpty() ? Validation.valid(new DeckSizeRule(null, maxCount)) : Validation.invalid(errors);
+		return errors.isEmpty() ? Validation.valid(new DeckSizeRule(UUID.randomUUID(), maxCount)) : Validation.invalid(errors);
 	}
 
-	public Long getId() {
+	public UUID getId() {
 		return id;
 	}
 
