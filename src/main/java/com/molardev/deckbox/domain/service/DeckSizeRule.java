@@ -1,6 +1,9 @@
 package com.molardev.deckbox.domain.service;
 
+import java.util.Map;
 import java.util.UUID;
+
+import org.springframework.validation.Errors;
 
 import com.molardev.deckbox.domain.entity.Deck;
 
@@ -45,6 +48,30 @@ public class DeckSizeRule implements IDeckValidationRule {
 		}
 		return errors.isEmpty() ? Validation.valid(new DeckSizeRule(UUID.randomUUID(), maxCount)) : Validation.invalid(errors);
 	}
+
+  public static Validation<Seq<String>, DeckSizeRule> create(Map<String, String> params) {
+    Seq<String> errors = validateParams(params);
+    return errors.isEmpty() ? DeckSizeRule.create(Integer.parseInt(params.get("maxCount"))) : Validation.invalid(errors); 
+  }
+
+  public static Validation<Seq<String>, DeckSizeRule> create(UUID id, Map<String, String> params) {
+    Seq<String> errors = validateParams(params);
+    if(id == null) {
+      errors = errors.append("Id of the rule cannot be null");
+    }
+    return errors.isEmpty() ? DeckSizeRule.create(id, Integer.parseInt(params.get("maxCount"))) : Validation.invalid(errors);
+  }
+
+  private static Seq<String> validateParams(Map<String, String> params) {
+    Seq<String> errors = io.vavr.collection.List.of();
+    if(!params.containsKey("maxCount")) {
+      errors = errors.append("Rule is missing parameter maxCount");
+    }
+    if(!params.get("maxCount").matches("-?\\d+")) {
+      errors = errors.append("maxCount paramenter must be a valid integer");
+    }
+    return errors;
+  }
 
 	public UUID getId() {
 		return id;

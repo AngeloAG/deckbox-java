@@ -1,9 +1,8 @@
 package com.molardev.deckbox.application.common.commands;
 
+import java.util.Map;
 import java.util.UUID;
 
-import com.molardev.deckbox.domain.service.IDeckValidationRule;
-
-public record AddRuleToFormatCommand(UUID id, IDeckValidationRule rule) {
+public record AddRuleToFormatCommand(UUID id, String ruleType, Map<String, String> params) {
 	
 }

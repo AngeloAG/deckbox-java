@@ -1,5 +1,6 @@
 package com.molardev.deckbox.domain.service;
 
+import java.util.Map;
 import java.util.UUID;
 
 import com.molardev.deckbox.domain.entity.Deck;
@@ -58,6 +59,33 @@ public class MaxCopiesRule implements IDeckValidationRule {
 			}
 			return errors.isEmpty() ? Validation.valid(new MaxCopiesRule(UUID.randomUUID(), maxCopies, cardTypeValidation.get())) : Validation.invalid(errors); 
 		}
+
+    public static Validation<Seq<String>, MaxCopiesRule> create(Map<String, String> params) {
+      Seq<String> errors = validateParams(params);
+      return errors.isEmpty() ? MaxCopiesRule.create(Integer.parseInt(params.get("maxCopies")), params.get("cardType")) : Validation.invalid(errors);
+    }
+
+    public static Validation<Seq<String>, MaxCopiesRule> create(UUID id, Map<String, String> params) {
+      Seq<String> errors = validateParams(params);
+      if(id == null) {
+        errors = errors.append("The id of the rule cannot be null");
+      }
+      return errors.isEmpty() ? MaxCopiesRule.create(id, Integer.parseInt(params.get("maxCopies")), params.get("cardType")) : Validation.invalid(errors);
+    }
+
+    private static Seq<String> validateParams(Map<String, String> params) {
+      Seq<String> errors = io.vavr.collection.List.of();
+      if(!params.containsKey("maxCopies")) {
+        errors = errors.append("The parameter maxCopies is missing");
+      }
+      if(!params.get("maxCopies").matches("-?\\d+")) {
+        errors = errors.append("The parameters maxCopies must be a valid integer");
+      }
+      if(!params.containsKey("cardType")) {
+        errors = errors.append("The parameter cardType is missing");
+      }
+      return errors;
+    }
 
 		public UUID getId() {
 			return id;

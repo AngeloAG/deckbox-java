@@ -15,7 +15,6 @@ import com.molardev.deckbox.infrastructure.controllers.dtos.FormatDto;
 import com.molardev.deckbox.infrastructure.controllers.dtos.RuleDto;
 import com.molardev.deckbox.infrastructure.persistence.enums.RuleType;
 
-import io.vavr.collection.List;
 import io.vavr.collection.Seq;
 import io.vavr.control.Validation;
 
@@ -67,65 +66,16 @@ public class RuleTranslator {
     }
   }
 
-  public static Validation<Seq<String>, DeckSizeRule> toDeckSizeRule(RuleDto rule) {
-    Seq<String> errors = io.vavr.collection.List.of();
-    if(!rule.parameters.containsKey("maxCount")) {
-      errors = errors.append("Rule is missing parameter maxCount");
-    }
-    if(!rule.parameters.get("maxCount").matches("-?\\d+")) {
-      errors = errors.append("maxCount paramenter must be a valid integer");
-    }
-    return errors.isEmpty() ? DeckSizeRule.create(rule.id, Integer.parseInt(rule.parameters.get("maxCount"))) : Validation.invalid(errors);
-  }
-
-  public static Validation<Seq<String>, ElementalTypeRule> toElementalTypeRule(RuleDto rule) {
-    Seq<String> errors = io.vavr.collection.List.of();
-    if(!rule.parameters.containsKey("disallowedTypes")) {
-      errors = errors.append("Parameter disallowedTypes is missing");
-    }
-    if(!rule.parameters.containsKey("maxElementalTypes")) {
-      errors = errors.append("Parameter maxElementalTypes is missing");
-    }
-    if(!rule.parameters.get("maxElementalTypes").matches("-?\\d+")) {
-      errors = errors.append("Paramater maxElementalTypes must be a valid integer");
-    }
-    List<String> disallowedTypes = io.vavr.collection.List.of(rule.parameters.get("disallowedTypes").split(","));
-    return errors.isEmpty() ? ElementalTypeRule.create(rule.id, disallowedTypes, Integer.parseInt(rule.parameters.get("maxElementalTypes"))) : Validation.invalid(errors);
-  }
-
-  public static Validation<Seq<String>, LegalitiesRule> toLegalitiesRule(RuleDto rule) {
-    Seq<String> errors = io.vavr.collection.List.of();
-    if(!rule.parameters.containsKey("disallowedLegalities")) {
-      errors = errors.append("The parameter dissalowedLegalities is missing");
-    }
-    List<String> disallowedLegalities = io.vavr.collection.List.of(rule.parameters.get("disallowedLegalities").split(","));
-    return errors.isEmpty() ? LegalitiesRule.create(rule.id, disallowedLegalities) : Validation.invalid(errors);
-  }
-
-  public static Validation<Seq<String>, MaxCopiesRule> toMaxCopiesRule(RuleDto rule) {
-    Seq<String> errors = io.vavr.collection.List.of();
-    if(!rule.parameters.containsKey("maxCopies")) {
-      errors = errors.append("The parameter maxCopies is missing");
-    }
-    if(!rule.parameters.get("maxCopies").matches("-?\\\\d+")) {
-      errors = errors.append("The parameters maxCopies must be a valid integer");
-    }
-    if(!rule.parameters.containsKey("cardType")) {
-      errors = errors.append("The parameter cardType is missing");
-    }
-    return errors.isEmpty() ? MaxCopiesRule.create(rule.id, Integer.parseInt(rule.parameters.get("maxCopies")), rule.parameters.get("cardType")) : Validation.invalid(errors);
-  }
-
   public static Validation<Seq<String>, IDeckValidationRule> toValidationRule(RuleDto rule) {
     var ruleTypeValidation = RuleType.fromString(rule.ruleType);
     if(ruleTypeValidation.isInvalid()) {
       return Validation.invalid(ruleTypeValidation.getError());
     }
     return switch(ruleTypeValidation.get()) {
-      case DECK_SIZE -> toDeckSizeRule(rule).map(IDeckValidationRule.class::cast);
-      case ELEMENTAL_TYPE -> toElementalTypeRule(rule).map(IDeckValidationRule.class::cast);
-      case LEGALITY -> toLegalitiesRule(rule).map(IDeckValidationRule.class::cast);
-      case MAX_COPIES -> toMaxCopiesRule(rule).map(IDeckValidationRule.class::cast);
+      case DECK_SIZE -> DeckSizeRule.create(rule.id, rule.parameters).map(IDeckValidationRule.class::cast);
+      case ELEMENTAL_TYPE -> ElementalTypeRule.create(rule.id, rule.parameters).map(IDeckValidationRule.class::cast);
+      case LEGALITY -> LegalitiesRule.create(rule.id, rule.parameters).map(IDeckValidationRule.class::cast);
+      case MAX_COPIES -> MaxCopiesRule.create(rule.id, rule.parameters).map(IDeckValidationRule.class::cast);
     };
   }
 

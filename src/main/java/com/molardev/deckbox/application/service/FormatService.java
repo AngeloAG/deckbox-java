@@ -12,6 +12,7 @@ import com.molardev.deckbox.application.common.interfaces.IFormatRepository;
 import com.molardev.deckbox.application.common.interfaces.IRuleRepository;
 import com.molardev.deckbox.domain.entity.Format;
 import com.molardev.deckbox.domain.errors.CustomError;
+import com.molardev.deckbox.domain.service.RuleGenerator;
 import com.molardev.deckbox.domain.valueobject.FormatReference;
 import com.molardev.deckbox.infrastructure.persistence.jpa.RuleJpaRepository;
 import io.vavr.collection.Seq;
@@ -39,17 +40,12 @@ public class FormatService {
 	public Either<CustomError, Option<Format>> addRuleToFormat(AddRuleToFormatCommand command) {
 		return deckFormatRepository.findById(command.id())
       .flatMap(formatOption -> formatOption
-          .map(format -> ruleRepository.findById(command.rule().getId())
-            .flatMap(ruleOption -> {
-              if(ruleOption.isEmpty()) {
-                return ruleRepository.save(command.rule())
-                  .flatMap(rule -> deckFormatRepository
-                    .save(format.updateRule(rule.getId(), rule)).map(Option::some));
-              }
-              return Either.right(Option.some(format));
-            }))
-            .getOrElse(() -> Either.right(Option.none()))
-          );
+          .map(format -> RuleGenerator.generate(command.ruleType(), command.params())
+            .toEither()
+            .mapLeft(errors -> (CustomError) new CustomError.ValidationError(errors))
+            .flatMap(newRule -> ruleRepository.save(newRule)
+              .flatMap(savedRule -> deckFormatRepository.save(format.updateRule(savedRule.getId(), savedRule)).map(Option::some))))
+          .getOrElse(() -> Either.right(Option.none())));
 	}
 
   public Either<CustomError, Option<Format>> updateRuleFromFormat(UpdateRuleFromFormatCommand command) {

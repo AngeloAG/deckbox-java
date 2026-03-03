@@ -1,5 +1,6 @@
 package com.molardev.deckbox.domain.service;
 
+import java.util.Map;
 import java.util.UUID;
 
 import com.molardev.deckbox.domain.entity.Deck;
@@ -51,6 +52,29 @@ public class LegalitiesRule implements IDeckValidationRule {
 
 		return errors.isEmpty() ? Validation.valid(new LegalitiesRule(UUID.randomUUID(), legalitiesValidation.get())) : Validation.invalid(errors);
 	}
+
+  public static Validation<Seq<String>, LegalitiesRule> create(Map<String, String> params) {
+    Seq<String> errors = validateParams(params);
+    List<String> disallowedLegalities = io.vavr.collection.List.of(params.get("disallowedLegalities").split(","));
+    return errors.isEmpty() ? LegalitiesRule.create(disallowedLegalities) : Validation.invalid(errors);
+  }
+
+  public static Validation<Seq<String>, LegalitiesRule> create(UUID id, Map<String, String> params) {
+    Seq<String> errors = validateParams(params);
+    if(id == null) {
+      errors = errors.append("The id of the rule cannot be null");
+    }
+    List<String> disallowedLegalities = io.vavr.collection.List.of(params.get("disallowedLegalities").split(","));
+    return errors.isEmpty() ? LegalitiesRule.create(id, disallowedLegalities) : Validation.invalid(errors);
+  }
+
+  private static Seq<String> validateParams(Map<String, String> params) {
+    Seq<String> errors = io.vavr.collection.List.of();
+    if(!params.containsKey("disallowedLegalities")) {
+      errors = errors.append("The parameter dissalowedLegalities is missing");
+    }
+    return errors;
+  }
 
 	public UUID getId() {
 		return id;

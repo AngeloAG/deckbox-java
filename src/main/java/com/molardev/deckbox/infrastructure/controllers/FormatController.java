@@ -40,13 +40,7 @@ public class FormatController {
   @PostMapping()
   public ResponseEntity<?> createFormat(@RequestBody CreateFormatRequest request) {
       return formatService.createDeckFormat(new CreateFormatCommand(request.getName(), request.getDescription()))
-        .fold(error -> switch (error) {
-							case CustomError.ValidationError(var errors) -> ResponseEntity.badRequest().body(Map.of("error", errors.asJava()));
-							case CustomError.RepositoryError(var message, var e) -> 
-                    ResponseEntity.internalServerError().body(Map.of("error", "An error occurred. Try again later"));
-              case CustomError.RehydrationError(var errors) -> 
-                    ResponseEntity.internalServerError().body(Map.of("error", "An error occurred. Try again later"));
-						}, 
+        .fold(error -> mapErrors(error),
               format -> ResponseEntity.ok(
                 RuleTranslator.toDto(format)
               ));
@@ -55,13 +49,7 @@ public class FormatController {
   @GetMapping("/{formatId}")
   public ResponseEntity<?> getFormat(@PathVariable UUID formatId) {
       return formatService.getFormatById(new GetFormatByIdCommand(formatId))
-        .fold(error -> switch (error) {
-							case CustomError.ValidationError(var errors) -> ResponseEntity.badRequest().body(Map.of("error", errors.asJava()));
-							case CustomError.RepositoryError(var message, var e) -> 
-                    ResponseEntity.internalServerError().body(Map.of("error", "An error occurred. Try again later"));
-              case CustomError.RehydrationError(var errors) -> 
-                    ResponseEntity.internalServerError().body(Map.of("error", "An error occurred. Try again later"));
-						}, 
+        .fold(error -> mapErrors(error),
             formatOption -> formatOption.isEmpty() 
               ? ResponseEntity.notFound().build()
               : ResponseEntity.ok(RuleTranslator.toDto(formatOption.get())));
@@ -71,13 +59,7 @@ public class FormatController {
   public ResponseEntity<?> getFormatRules(@PathVariable UUID formatId) {
       return formatService.getFormatWithRules(new GetFormatByIdCommand(formatId))
         .fold(
-          error -> switch (error) {
-							case CustomError.ValidationError(var errors) -> ResponseEntity.badRequest().body(Map.of("error", errors.asJava()));
-							case CustomError.RepositoryError(var message, var e) -> 
-                    ResponseEntity.internalServerError().body(Map.of("error", "An error occurred. Try again later"));
-              case CustomError.RehydrationError(var errors) -> 
-                    ResponseEntity.internalServerError().body(Map.of("error", "An error occurred. Try again later"));
-						},
+          error -> mapErrors(error),
           formatOption -> formatOption.isEmpty() 
             ? ResponseEntity.notFound().build()
             : ResponseEntity.ok(RuleTranslator.toDto(formatOption.get())));
@@ -87,42 +69,21 @@ public class FormatController {
   public ResponseEntity<?> getAllFormats() {
       return formatService.getAllFormatReferences()
         .fold(
-          error -> switch (error) {
-							case CustomError.ValidationError(var errors) -> ResponseEntity.badRequest().body(Map.of("error", errors.asJava()));
-							case CustomError.RepositoryError(var message, var e) -> 
-                    ResponseEntity.internalServerError().body(Map.of("error", "An error occurred. Try again later"));
-              case CustomError.RehydrationError(var errors) -> 
-                    ResponseEntity.internalServerError().body(Map.of("error", "An error occurred. Try again later"));
-						}, 
+          error -> mapErrors(error),
           formats -> ResponseEntity.ok(formats.map(format -> RuleTranslator.toDto(format))));
   }
   
   @DeleteMapping("/{formatId}")
   public ResponseEntity<?> deleteFormat(@PathVariable UUID formatId) {
     return formatService.deleteFormatById(new DeleteFormatCommand(formatId))
-      .fold(error -> switch (error) {
-							case CustomError.ValidationError(var errors) -> ResponseEntity.badRequest().body(Map.of("error", errors.asJava()));
-							case CustomError.RepositoryError(var message, var e) -> 
-                    ResponseEntity.internalServerError().body(Map.of("error", "An error occurred. Try again later"));
-              case CustomError.RehydrationError(var errors) -> 
-                    ResponseEntity.internalServerError().body(Map.of("error", "An error occurred. Try again later"));
-						}, 
+      .fold(error -> mapErrors(error),
             v -> ResponseEntity.noContent().build());
   }
   
   @PostMapping("/{formatId}/rules")
   public ResponseEntity<?> addRuleToFormat(@PathVariable UUID formatId, @RequestBody AddRuleToFormatRequest request) {
-       return RuleTranslator.toValidationRule(request.rule())
-        .toEither()
-        .mapLeft(errors -> (CustomError) new CustomError.ValidationError(errors))
-        .flatMap(validationRule -> formatService.addRuleToFormat(new AddRuleToFormatCommand(formatId, validationRule)))
-        .fold(error -> switch (error) {
-							case CustomError.ValidationError(var errors) -> ResponseEntity.badRequest().body(Map.of("error", errors.asJava()));
-							case CustomError.RepositoryError(var message, var e) -> 
-                    ResponseEntity.internalServerError().body(Map.of("error", "An error occurred. Try again later"));
-              case CustomError.RehydrationError(var errors) -> 
-                    ResponseEntity.internalServerError().body(Map.of("error", "An error occurred. Try again later"));
-						},  
+       return formatService.addRuleToFormat(new AddRuleToFormatCommand(formatId, request.ruleType(), request.params()))
+        .fold(error -> mapErrors(error),
             formatOption -> formatOption.isEmpty()
               ? ResponseEntity.notFound().build()
               : ResponseEntity.ok(RuleTranslator.toDto(formatOption.get())));
@@ -131,34 +92,33 @@ public class FormatController {
   @DeleteMapping("/{formatId}/rules/{ruleId}") 
   public ResponseEntity<?> deleteRuleFromFormat(@PathVariable UUID formatId, @PathVariable UUID ruleId) {
     return formatService.removeRuleFromFormat(new RemoveRuleFromFormatCommand(formatId, ruleId))
-      .fold(error -> switch (error) {
-							case CustomError.ValidationError(var errors) -> ResponseEntity.badRequest().body(Map.of("error", errors.asJava()));
-							case CustomError.RepositoryError(var message, var e) -> 
-                    ResponseEntity.internalServerError().body(Map.of("error", "An error occurred. Try again later"));
-              case CustomError.RehydrationError(var errors) -> 
-                    ResponseEntity.internalServerError().body(Map.of("error", "An error occurred. Try again later"));
-						},  
+      .fold(error -> mapErrors(error),
             formatOption -> formatOption.isEmpty()
               ? ResponseEntity.notFound().build()
               : ResponseEntity.ok(RuleTranslator.toDto(formatOption.get())));
   }
 
   @PutMapping("/{formatId}/rules/{ruleId}")
-  public ResponseEntity<?> updateRuleInFormat(@PathVariable UUID formatId, @PathVariable UUID ruleId, UpdateFormatRuleRequest request) {
-    return RuleTranslator.toDeckSizeRule(request.rule())
+  public ResponseEntity<?> updateRuleInFormat(@PathVariable UUID formatId, @PathVariable UUID ruleId, @RequestBody UpdateFormatRuleRequest request) {
+    return RuleTranslator.toValidationRule(request.rule())
       .fold(
         errors -> ResponseEntity.badRequest().body(Map.of("error", errors.asJava())), 
         newRule -> formatService.updateRuleFromFormat(new UpdateRuleFromFormatCommand(formatId, ruleId, (IDeckValidationRule) newRule))
           .fold(
-            error -> switch (error) {
-							case CustomError.ValidationError(var errors) -> ResponseEntity.badRequest().body(Map.of("error", errors.asJava()));
-							case CustomError.RepositoryError(var message, var e) -> 
-                    ResponseEntity.internalServerError().body(Map.of("error", "An error occurred. Try again later"));
-              case CustomError.RehydrationError(var errors) -> 
-                    ResponseEntity.internalServerError().body(Map.of("error", "An error occurred. Try again later"));
-						},  
+            error -> mapErrors(error), 
             formatOption -> formatOption.isEmpty() 
               ? ResponseEntity.notFound().build()
               : ResponseEntity.ok(RuleTranslator.toDto(formatOption.get()))));
+  }
+
+  private ResponseEntity<Object> mapErrors(CustomError error) {
+    return switch (error) {
+      case CustomError.ValidationError(var errors) -> ResponseEntity.badRequest().body(Map.of("error", errors.asJava()));
+      case CustomError.RepositoryError(var message, var e) -> 
+            ResponseEntity.internalServerError().body(Map.of("error", "An error occurred. Try again later"));
+      case CustomError.RehydrationError(var errors) -> 
+            ResponseEntity.internalServerError().body(Map.of("error", "An error occurred. Try again later"));
+      case CustomError.NotFoundError(var message) -> ResponseEntity.notFound().build();
+    };
   }
 }

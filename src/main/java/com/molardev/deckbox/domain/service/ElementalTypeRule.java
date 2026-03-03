@@ -1,5 +1,6 @@
 package com.molardev.deckbox.domain.service;
 
+import java.util.Map;
 import java.util.UUID;
 
 import com.molardev.deckbox.domain.entity.Deck;
@@ -67,6 +68,35 @@ public class ElementalTypeRule implements IDeckValidationRule {
 		}
 		return errors.isEmpty() ? Validation.valid(new ElementalTypeRule(UUID.randomUUID(), disallowedTypesValidation.get(), maxElementalTypes)) : Validation.invalid(errors);
 	}
+
+  public static Validation<Seq<String>, ElementalTypeRule> create(Map<String, String> params) {
+    Seq<String> errors = validateParams(params);
+    List<String> disallowedTypes = io.vavr.collection.List.of(params.get("disallowedTypes").split(","));
+    return errors.isEmpty() ? ElementalTypeRule.create(disallowedTypes, Integer.parseInt(params.get("maxElementalTypes"))) : Validation.invalid(errors);
+  }
+
+  public static Validation<Seq<String>, ElementalTypeRule> create(UUID id, Map<String, String> params) {
+    Seq<String> errors = validateParams(params);
+    if(id == null) {
+      errors = errors.append("Id of the rule cannot be null");
+    }
+    List<String> disallowedTypes = io.vavr.collection.List.of(params.get("disallowedTypes").split(","));
+    return errors.isEmpty() ? ElementalTypeRule.create(id, disallowedTypes, Integer.parseInt(params.get("maxElementalTypes"))) : Validation.invalid(errors);
+  }
+
+  public static Seq<String> validateParams(Map<String, String> params) {
+    Seq<String> errors = io.vavr.collection.List.of();
+    if(!params.containsKey("disallowedTypes")) {
+      errors = errors.append("Parameter disallowedTypes is missing");
+    }
+    if(!params.containsKey("maxElementalTypes")) {
+      errors = errors.append("Parameter maxElementalTypes is missing");
+    }
+    if(!params.get("maxElementalTypes").matches("-?\\d+")) {
+      errors = errors.append("Paramater maxElementalTypes must be a valid integer");
+    }
+    return errors;
+  }
 
 	public UUID getId() {
 		return id;

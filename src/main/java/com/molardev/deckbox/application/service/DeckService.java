@@ -24,12 +24,10 @@ import org.springframework.stereotype.Service;
 public class DeckService {
     private final IDeckRepository deckRepository;
 		private final ICardRepository cardRepository;
-		// private final IFormatRepository formatRepository;
 
-    public DeckService(IDeckRepository deckRepository, ICardRepository cardRepository) { //, IFormatRepository formatRepository) {
+    public DeckService(IDeckRepository deckRepository, ICardRepository cardRepository) { 
         this.deckRepository = deckRepository;
         this.cardRepository = cardRepository;
-        // this.formatRepository = formatRepository;
     }
 
     public Either<CustomError, Deck> createDeck(CreateDeckCommand command) {
@@ -115,14 +113,4 @@ public class DeckService {
 		public Either<CustomError, Void> deleteDeckById(DeleteDeckCommand command) {
 			return deckRepository.deleteById(command.id());
 		}
-
-		// public Validation<Seq<String>, Deck> validateDeckAgainstFormat(ValidateDeckCommand command) {
-		// 	return deckRepository.findById(command.deckId())
-		// 		.flatMap(deck -> formatRepository.findById(command.formatId())
-		// 			.flatMap(format -> {
-		// 				DeckValidator validator = new DeckValidator(format.getRules());
-		// 				return validator.validate(deck);
-		// 			})
-		// 		);
-		// }
 }
