@@ -1,0 +1,30 @@
+services:
+  db:
+    image: postgres:16-alpine
+    shm_size: 128mb
+    environment:
+      - POSTGRES_PASSWORD=secretpassword
+      - POSTGRES_USER=root
+      - POSTGRES_DB=deckbox_db
+    volumes:
+      - deckbox-db-data:/var/lib/postgresql/data
+    healthcheck: # This tells Docker how to check if Postgres is actually "ready"
+      test: ["CMD-SHELL", "pg_isready -U root -d deckbox_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build: .
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy # Only start the API once the DB is actually ready
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/deckbox_db
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=secretpassword
+
+volumes:
+  deckbox-db-data:
