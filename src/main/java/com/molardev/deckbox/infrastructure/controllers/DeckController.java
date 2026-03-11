@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -137,6 +138,11 @@ public class DeckController {
         validationMessages -> ResponseEntity.ok().body(validationMessages.isEmpty() ? List.of("Deck is valid") : validationMessages));
   } 
 
+  @GetMapping("/hello")
+  public ResponseEntity<Object> hello() {
+    return ResponseEntity.ok("hello");
+  }
+
 
   private ResponseEntity<Object> mapErrors(CustomError error) {
     return switch (error) {
@@ -146,6 +152,7 @@ public class DeckController {
       case CustomError.RehydrationError(var errors) -> 
             ResponseEntity.internalServerError().body(Map.of("error", "An error occurred. Try again later"));
       case CustomError.NotFoundError(var message) -> ResponseEntity.notFound().build();
+      case CustomError.ConflictError() -> ResponseEntity.status(HttpStatus.CONFLICT).build();
     };
   }
 }

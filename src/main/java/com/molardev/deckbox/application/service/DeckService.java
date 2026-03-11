@@ -8,6 +8,7 @@ import com.molardev.deckbox.application.common.commands.RemoveCardFromDeckComman
 import com.molardev.deckbox.application.common.commands.UpdateCardCountCommand;
 import com.molardev.deckbox.application.common.interfaces.ICardRepository;
 import com.molardev.deckbox.application.common.interfaces.IDeckRepository;
+import com.molardev.deckbox.application.common.interfaces.IIdentityRepository;
 import com.molardev.deckbox.domain.entity.Deck;
 import com.molardev.deckbox.domain.errors.CustomError;
 import com.molardev.deckbox.domain.valueobject.Card;
@@ -18,19 +19,25 @@ import com.molardev.deckbox.domain.valueobject.DeckReference;
 import io.vavr.collection.Seq;
 import io.vavr.control.Either;
 import io.vavr.control.Option;
+
+import java.util.UUID;
+
 import org.springframework.stereotype.Service;
 
 @Service
 public class DeckService {
     private final IDeckRepository deckRepository;
 		private final ICardRepository cardRepository;
+    private final IIdentityRepository identityRepository;
 
-    public DeckService(IDeckRepository deckRepository, ICardRepository cardRepository) { 
+    public DeckService(IDeckRepository deckRepository, ICardRepository cardRepository, IIdentityRepository identityRepository) { 
         this.deckRepository = deckRepository;
         this.cardRepository = cardRepository;
+        this.identityRepository = identityRepository;
     }
 
     public Either<CustomError, Deck> createDeck(CreateDeckCommand command) {
+      var userId = identityRepository.getCurrentUserId();
 			return Deck.create(command.name())
 				.toEither()
 				.mapLeft(errors -> (CustomError) new CustomError.ValidationError(errors))

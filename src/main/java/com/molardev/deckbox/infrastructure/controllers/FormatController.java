@@ -20,6 +20,7 @@ import com.molardev.deckbox.infrastructure.controllers.translations.RuleTranslat
 import java.util.Map;
 import java.util.UUID;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -121,6 +122,7 @@ public class FormatController {
       case CustomError.RehydrationError(var errors) -> 
             ResponseEntity.internalServerError().body(Map.of("error", "An error occurred. Try again later"));
       case CustomError.NotFoundError(var message) -> ResponseEntity.notFound().build();
+      case CustomError.ConflictError() -> ResponseEntity.status(HttpStatus.CONFLICT).build();
     };
   }
 }

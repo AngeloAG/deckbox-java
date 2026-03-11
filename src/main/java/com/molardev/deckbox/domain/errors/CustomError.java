@@ -7,4 +7,5 @@ public sealed interface CustomError {
   record RepositoryError(String msg, Exception exception) implements CustomError {}
   record RehydrationError(Seq<String> errors) implements CustomError {}
   record NotFoundError(String msg) implements CustomError {}
+  record ConflictError() implements CustomError {}
 }
