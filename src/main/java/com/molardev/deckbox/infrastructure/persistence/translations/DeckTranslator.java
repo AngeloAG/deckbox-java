@@ -1,7 +1,5 @@
 package com.molardev.deckbox.infrastructure.persistence.translations;
 
-
-
 import com.molardev.deckbox.domain.entity.Deck;
 import com.molardev.deckbox.domain.enums.CardSubtype;
 import com.molardev.deckbox.domain.enums.CardType;
@@ -18,78 +16,84 @@ import com.molardev.deckbox.domain.valueobject.DeckReference;
 import com.molardev.deckbox.infrastructure.persistence.entity.CardEntity;
 import com.molardev.deckbox.infrastructure.persistence.entity.CardEntryEntity;
 import com.molardev.deckbox.infrastructure.persistence.entity.DeckEntity;
+import com.molardev.deckbox.infrastructure.persistence.entity.UserEntity;
 
 import io.vavr.collection.Seq;
 import io.vavr.control.Validation;
 
 public class DeckTranslator {
 
-	private DeckTranslator() {
-		// Private constructor to prevent instantiation
-	}
+  private DeckTranslator() {
+    // Private constructor to prevent instantiation
+  }
 
-	public static DeckEntity toEntity(Deck deck) {
-		DeckEntity entity = new DeckEntity();
-		entity.setId(deck.getDeckReference().getId());
-		entity.setName(deck.getDeckReference().getName().getName());
-		entity.setCardEntries(deck.getCardEntries().map(DeckTranslator::toEntity).toJavaList());
-		return entity;
-	}
+  public static DeckEntity toEntity(Deck deck) {
+    DeckEntity entity = new DeckEntity();
+    entity.setId(deck.getDeckReference().getId());
+    entity.setName(deck.getDeckReference().getName().getName());
+    entity.setCardEntries(deck.getCardEntries().map(DeckTranslator::toEntity).toJavaList());
+    UserEntity userEntity = new UserEntity();
+    userEntity.setId(deck.getDeckReference().getOwnerId());
+    entity.setOwner(userEntity);
+    return entity;
+  }
 
-	public static Validation<Seq<String>, Deck> toDomain(DeckEntity entity) {
-		io.vavr.collection.List<Validation<Seq<String>, CardEntry>> entryValidations =
-		    io.vavr.collection.List.ofAll(entity.getCardEntries()).map(DeckTranslator::toDomain);
+  public static Validation<Seq<String>, Deck> toDomain(DeckEntity entity) {
+    io.vavr.collection.List<Validation<Seq<String>, CardEntry>> entryValidations = io.vavr.collection.List
+        .ofAll(entity.getCardEntries()).map(DeckTranslator::toDomain);
 
-		Validation<Seq<String>, io.vavr.collection.List<CardEntry>> sequenced =
-		    Validation.sequence(entryValidations).map(io.vavr.collection.List::ofAll);
+    Validation<Seq<String>, io.vavr.collection.List<CardEntry>> sequenced = Validation.sequence(entryValidations)
+        .map(io.vavr.collection.List::ofAll);
 
-		return DeckName.create(entity.getName())
-		    .flatMap(name -> DeckReference.create(name, entity.getId()))
-		    .flatMap(deckRef -> sequenced.flatMap(entries -> Deck.create(deckRef, entries)));
-	}
+    return DeckName.create(entity.getName())
+        .flatMap(name -> DeckReference.create(name, entity.getId()))
+        .flatMap(deckRef -> sequenced.flatMap(entries -> Deck.create(deckRef, entries)));
+  }
 
-	public static Validation<Seq<String>, Card> toDomain(CardEntity entity) {
-		Validation<Seq<String>, CardReference> cardRefVal = CardReference.create(entity.getId(), entity.getCardName());
-		CardType cardType = CardType.valueOf(entity.getType());
-		io.vavr.collection.List<CardSubtype> subTypes = io.vavr.collection.List.ofAll(entity.getSubTypes()).map(CardSubtype::valueOf);
-		Validation<Seq<String>, CardClassification> classVal = CardClassification.create(cardType, subTypes);
-		io.vavr.collection.List<ElementalType> elementalTypes = io.vavr.collection.List.ofAll(entity.getElementalTypes()).map(ElementalType::valueOf);
-		io.vavr.collection.List<Legality> legalities = io.vavr.collection.List.ofAll(entity.getLegalities()).map(Legality::valueOf);
-		Validation<Seq<String>, CardImageUrl> imageUrlVal = CardImageUrl.create(entity.getImageUrl());
+  public static Validation<Seq<String>, Card> toDomain(CardEntity entity) {
+    Validation<Seq<String>, CardReference> cardRefVal = CardReference.create(entity.getId(), entity.getCardName());
+    CardType cardType = CardType.valueOf(entity.getType());
+    io.vavr.collection.List<CardSubtype> subTypes = io.vavr.collection.List.ofAll(entity.getSubTypes())
+        .map(CardSubtype::valueOf);
+    Validation<Seq<String>, CardClassification> classVal = CardClassification.create(cardType, subTypes);
+    io.vavr.collection.List<ElementalType> elementalTypes = io.vavr.collection.List.ofAll(entity.getElementalTypes())
+        .map(ElementalType::valueOf);
+    io.vavr.collection.List<Legality> legalities = io.vavr.collection.List.ofAll(entity.getLegalities())
+        .map(Legality::valueOf);
+    Validation<Seq<String>, CardImageUrl> imageUrlVal = CardImageUrl.create(entity.getImageUrl());
 
-		// Combine all validations in the correct order for Card.create
-		return cardRefVal.combine(classVal)
-			.combine(Validation.valid(legalities))
-			.combine(Validation.valid(elementalTypes))
-			.combine(imageUrlVal)
-			.ap(Card::create)
-			.mapError(errors -> errors.flatMap(x -> x))
-			.flatMap(v -> v); // flatten nested Validation
-	}
+    // Combine all validations in the correct order for Card.create
+    return cardRefVal.combine(classVal)
+        .combine(Validation.valid(legalities))
+        .combine(Validation.valid(elementalTypes))
+        .combine(imageUrlVal)
+        .ap(Card::create)
+        .mapError(errors -> errors.flatMap(x -> x))
+        .flatMap(v -> v); // flatten nested Validation
+  }
 
-	public static CardEntity toEntity(Card card) {
-		CardEntity entity = new CardEntity();
-		entity.setId(card.getCardReference().getCardId());
-		entity.setCardName(card.getCardReference().getName());
-		entity.setType(card.getCardClassification().getSuperType().name());
-		entity.setSubTypes(card.getCardClassification().getSubType().map(Enum::name).toJavaList());
-		entity.setElementalTypes(card.getElementalTypes().map(Enum::name).toJavaList());
-		entity.setLegalities(card.getLegalities().map(Enum::name).toJavaList());
-		entity.setImageUrl(card.getImageUrl() != null ? card.getImageUrl().getValue() : null);
-		return entity;
-	}
+  public static CardEntity toEntity(Card card) {
+    CardEntity entity = new CardEntity();
+    entity.setId(card.getCardReference().getCardId());
+    entity.setCardName(card.getCardReference().getName());
+    entity.setType(card.getCardClassification().getSuperType().name());
+    entity.setSubTypes(card.getCardClassification().getSubType().map(Enum::name).toJavaList());
+    entity.setElementalTypes(card.getElementalTypes().map(Enum::name).toJavaList());
+    entity.setLegalities(card.getLegalities().map(Enum::name).toJavaList());
+    entity.setImageUrl(card.getImageUrl() != null ? card.getImageUrl().getValue() : null);
+    return entity;
+  }
 
-	public static CardEntryEntity toEntity(CardEntry entry) {
-		CardEntryEntity entity = new CardEntryEntity();
-		entity.setCard(toEntity(entry.getCard()));
-		entity.setCount(entry.getCount().getValue());
-		return entity;
-	}
+  public static CardEntryEntity toEntity(CardEntry entry) {
+    CardEntryEntity entity = new CardEntryEntity();
+    entity.setCard(toEntity(entry.getCard()));
+    entity.setCount(entry.getCount().getValue());
+    return entity;
+  }
 
-	public static Validation<Seq<String>, CardEntry> toDomain(CardEntryEntity entity) {
-		return toDomain(entity.getCard())
-			.flatMap(card -> CardCount.create(entity.getCount())
-				.flatMap(count -> CardEntry.create(card, count))
-			);
-	}
+  public static Validation<Seq<String>, CardEntry> toDomain(CardEntryEntity entity) {
+    return toDomain(entity.getCard())
+        .flatMap(card -> CardCount.create(entity.getCount())
+            .flatMap(count -> CardEntry.create(card, count)));
+  }
 }

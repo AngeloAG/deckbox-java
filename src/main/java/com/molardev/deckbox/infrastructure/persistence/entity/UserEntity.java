@@ -1,9 +1,12 @@
 package com.molardev.deckbox.infrastructure.persistence.entity;
 
+import java.util.List;
 import java.util.UUID;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
 @Entity
@@ -14,7 +17,8 @@ public class UserEntity {
   private String email;
   private String hash;
 
-  public UserEntity() {}
+  public UserEntity() {
+  }
 
   public UserEntity(UUID id, String email, String hash) {
     this.id = id;
@@ -36,7 +40,7 @@ public class UserEntity {
 
   public void setId(UUID id) {
     this.id = id;
-  } 
+  }
 
   public void setEmail(String email) {
     this.email = email;

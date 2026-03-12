@@ -16,3 +16,6 @@ server:
   error:
     include-message: always
     include-stacktrace: always
+app:
+  jwt:
+    secret: "f44IMt293XGIZdNRGaes8oqqZeWrhFeJI34jMd+9TQ0="

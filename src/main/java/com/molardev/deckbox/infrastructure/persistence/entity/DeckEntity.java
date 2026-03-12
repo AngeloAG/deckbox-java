@@ -8,42 +8,57 @@ import java.util.List;
 @Entity
 @Table(name = "decks")
 public class DeckEntity {
-    @Id
-    private UUID id;
-    private String name;
+  @Id
+  private UUID id;
+  private String name;
 
-	@OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
-    @JoinColumn(name = "deck_id")
-    private List<CardEntryEntity> cardEntries = new ArrayList<>();
+  @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+  @JoinColumn(name = "deck_id")
+  private List<CardEntryEntity> cardEntries = new ArrayList<>();
 
-    public DeckEntity() {}
+  @ManyToOne
+  @JoinColumn(name = "user_id")
+  private UserEntity owner;
 
-    public DeckEntity(UUID id, String name) {
-        this.id = id;
-        this.name = name;
-    }
+  public DeckEntity() {
+  }
 
-    public UUID getId() {
-        return id;
-    }
+  public DeckEntity(UUID id, String name, UserEntity owner) {
+    this.id = id;
+    this.name = name;
+    this.owner = owner;
+  }
 
-    public void setId(UUID id) {
-        this.id = id;
-    }
+  public UUID getId() {
+    return id;
+  }
 
-    public String getName() {
-        return name;
-    }
+  public void setId(UUID id) {
+    this.id = id;
+  }
 
-    public void setName(String name) {
-        this.name = name;
-    }
+  public String getName() {
+    return name;
+  }
 
-    public List<CardEntryEntity> getCardEntries() {
-        return cardEntries;
-    }
+  public void setName(String name) {
+    this.name = name;
+  }
 
-    public void setCardEntries(List<CardEntryEntity> cardEntries) {
-        this.cardEntries = cardEntries;
-    }
+  public List<CardEntryEntity> getCardEntries() {
+    return cardEntries;
+  }
+
+  public void setCardEntries(List<CardEntryEntity> cardEntries) {
+    this.cardEntries = cardEntries;
+  }
+
+  public UserEntity getOwner() {
+    return owner;
+  }
+
+  public void setOwner(UserEntity owner) {
+    this.owner = owner;
+  }
+
 }

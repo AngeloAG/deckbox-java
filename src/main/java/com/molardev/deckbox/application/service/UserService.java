@@ -19,7 +19,8 @@ public class UserService {
   private final IIdentityRepository iIdentityRepository;
   private final ITokenService tokenService;
 
-  public UserService(IPasswordEncoder passwordEncoder, IUserRepository userRepository, IIdentityRepository iIdentityRepository, ITokenService tokenService) {
+  public UserService(IPasswordEncoder passwordEncoder, IUserRepository userRepository,
+      IIdentityRepository iIdentityRepository, ITokenService tokenService) {
     this.passwordEncoder = passwordEncoder;
     this.userRepository = userRepository;
     this.iIdentityRepository = iIdentityRepository;
@@ -28,24 +29,24 @@ public class UserService {
 
   public Either<CustomError, Void> registerUserWithEmailAndPassword(String email, String password) {
     return userRepository.findByEmail(email)
-      .flatMap(userOption -> userOption
-        .map(user -> Either.<CustomError, Void>left((CustomError) new CustomError.ConflictError()))
-        .getOrElse(() -> User.create(email, io.vavr.collection.List.empty())
-          .toEither()
-          .mapLeft(errors -> (CustomError) new CustomError.ValidationError(errors))
-          .flatMap(createdUser -> userRepository.save(createdUser, passwordEncoder.hash(password)).map(null)))
-      );
+        .flatMap(userOption -> userOption
+            .map(user -> Either.<CustomError, Void>left((CustomError) new CustomError.ConflictError()))
+            .getOrElse(() -> User.create(email, io.vavr.collection.List.empty())
+                .toEither()
+                .mapLeft(errors -> (CustomError) new CustomError.ValidationError(errors))
+                .flatMap(createdUser -> userRepository.save(createdUser, passwordEncoder.hash(password))
+                    .map(user -> null))));
   }
 
   public Either<CustomError, Option<String>> loginUserWithEmailAndPassword(String email, String password) {
     return iIdentityRepository.getSecurityDetailsByEmail(email)
-      .map(userOption -> {
-        return userOption.flatMap(userDetails -> {
-          if(!passwordEncoder.matches(password, userDetails.hashPassword())) {
-            return Option.none();
-          }
-          return Option.some(tokenService.generateToken(userDetails.id().toString()));
+        .map(userOption -> {
+          return userOption.flatMap(userDetails -> {
+            if (!passwordEncoder.matches(password, userDetails.hashPassword())) {
+              return Option.none();
+            }
+            return Option.some(tokenService.generateToken(userDetails.id().toString()));
+          });
         });
-      });
   }
 }

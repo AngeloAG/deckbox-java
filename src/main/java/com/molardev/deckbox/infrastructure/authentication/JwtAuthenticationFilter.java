@@ -24,20 +24,23 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
   @Override
   protected void doFilterInternal(HttpServletRequest request,
-                                  HttpServletResponse response,
-                                  FilterChain filterChain) throws ServletException, IOException  {
+      HttpServletResponse response,
+      FilterChain filterChain) throws ServletException, IOException {
     String header = request.getHeader("Authorization");
-    if(header == null || !header.startsWith("Bearer ")) {
+    if (header == null || !header.startsWith("Bearer ")) {
       filterChain.doFilter(request, response);
       return;
     }
 
     String token = header.substring(7);
-    Option<String> userId = tokenService.getUserIdFromToken(token);
-    userId.forEach(id -> {
-      UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(id, null, List.of());
+    System.out.println("Token: " + token);
+    Option<String> userIdOption = tokenService.getUserIdFromToken(token);
+    System.out.println("User Id from token: " + userIdOption);
+    if (userIdOption.isDefined()) {
+      UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(userIdOption.get(), null,
+          List.of());
       SecurityContextHolder.getContext().setAuthentication(auth);
-    });
+    }
 
     filterChain.doFilter(request, response);
   }

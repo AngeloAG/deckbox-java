@@ -26,34 +26,34 @@ public class WebSecurityConfig { // Made Public
     this.tokenService = tokenService;
   }
 
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception { // Added throws Exception
-        System.out.println("--- SECURITY CONFIG ACTIVE ---");
+  @Bean
+  public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception { // Added throws Exception
+    System.out.println("--- SECURITY CONFIG ACTIVE ---");
 
-        http
-            .addFilterBefore(
-              new JwtAuthenticationFilter(tokenService), 
-              UsernamePasswordAuthenticationFilter.class)
-            .csrf(csrf -> csrf.disable()) 
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/auth/**").permitAll() // Added /api/ to match your structure
-                .anyRequest().authenticated()
-            )
-            // We removed the H2 permitAll here because we are using the "Ignoring" bean below
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+    http
+        .addFilterBefore(
+            new JwtAuthenticationFilter(tokenService),
+            UsernamePasswordAuthenticationFilter.class)
+        .csrf(csrf -> csrf.disable())
+        .authorizeHttpRequests(auth -> auth
+            .requestMatchers("/api/auth/**").permitAll() // Added /api/ to match your structure
+            .anyRequest().authenticated())
+        // We removed the H2 permitAll here because we are using the "Ignoring" bean
+        // below
+        .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
-        return http.build();
-    }
+    return http.build();
+  }
 
-    @Bean
-    public WebSecurityCustomizer webSecurityCustomizer() {
-        // This TELLS Spring to stay away from H2 entirely. No bouncer, no login box.
-        return (web) -> web.ignoring()
-            .requestMatchers(PathRequest.toH2Console());
-    }
+  @Bean
+  public WebSecurityCustomizer webSecurityCustomizer() {
+    // This TELLS Spring to stay away from H2 entirely. No bouncer, no login box.
+    return (web) -> web.ignoring()
+        .requestMatchers(PathRequest.toH2Console());
+  }
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+  @Bean
+  public PasswordEncoder passwordEncoder() {
+    return new BCryptPasswordEncoder();
+  }
 }

@@ -38,9 +38,9 @@ public class JpaUserRepository implements IUserRepository, IIdentityRepository {
   public Either<CustomError, Option<User>> findByEmail(String email) {
     try {
       return userJpaRepository.findByEmail(email)
-        .<Either<CustomError, Option<User>>>map(user -> Either.right(Option.some(UserTranslator.rehydrate(user))))
-        .orElseGet(() -> Either.right(Option.none()));
-    } catch(Exception e) {
+          .<Either<CustomError, Option<User>>>map(user -> Either.right(Option.some(UserTranslator.rehydrate(user))))
+          .orElseGet(() -> Either.right(Option.none()));
+    } catch (Exception e) {
       return Either.left((CustomError) new CustomError.RepositoryError(e.getMessage(), e));
     }
   }
@@ -49,9 +49,10 @@ public class JpaUserRepository implements IUserRepository, IIdentityRepository {
   public Either<CustomError, Option<UserSecurityDetails>> getSecurityDetailsByEmail(String email) {
     try {
       return userJpaRepository.findByEmail(email)
-        .<Either<CustomError, Option<UserSecurityDetails>>>map(user -> Either.right(Option.some(UserTranslator.rehydrateSecurityDetails(user))))
-        .orElseGet(() -> Either.right(Option.none()));
-    } catch(Exception e) {
+          .<Either<CustomError, Option<UserSecurityDetails>>>map(
+              user -> Either.right(Option.some(UserTranslator.rehydrateSecurityDetails(user))))
+          .orElseGet(() -> Either.right(Option.none()));
+    } catch (Exception e) {
       return Either.left((CustomError) new CustomError.RepositoryError(e.getMessage(), e));
     }
   }
@@ -60,7 +61,14 @@ public class JpaUserRepository implements IUserRepository, IIdentityRepository {
   public Either<CustomError, Option<UUID>> getCurrentUserId() {
     SecurityContext context = SecurityContextHolder.getContext();
     Authentication authentication = context.getAuthentication();
-    Object principal = authentication.getPrincipal();
-    return Either.right(Option.some(UUID.fromString(principal.toString())));
+
+    if (authentication == null || !authentication.isAuthenticated()) {
+      System.out.println("User Not Authenticated");
+      return Either.right(Option.none());
+    }
+
+    String userId = authentication.getName();
+    System.out.println("User Repo userId: " + userId);
+    return Either.right(Option.some(UUID.fromString(userId)));
   }
 }

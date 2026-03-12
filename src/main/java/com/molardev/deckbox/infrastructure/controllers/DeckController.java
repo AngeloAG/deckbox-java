@@ -32,127 +32,119 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 
-
 @CrossOrigin(origins = "http://localhost:5173")
 @RestController
 @RequestMapping("/decks")
 public class DeckController {
-	private final DeckService deckService;
+  private final DeckService deckService;
   private final DeckValidationService deckValidationService;
 
-	public DeckController(DeckService deckService, DeckValidationService deckValidationService) {
-		this.deckService = deckService;
+  public DeckController(DeckService deckService, DeckValidationService deckValidationService) {
+    this.deckService = deckService;
     this.deckValidationService = deckValidationService;
-	}
+  }
 
-	@PostMapping()
-	public ResponseEntity<Object> createDeck(@RequestBody CreateDeckRequest entity) {
-		return deckService.createDeck(new CreateDeckCommand(entity.name))
-				.fold(
-						error -> mapErrors(error),
-						deck -> ResponseEntity.ok(DeckTranslator.toDto(deck))
-				);
-	}
-	
-	@GetMapping("/{deckId}")
-	public ResponseEntity<Object> getDeck(@PathVariable UUID deckId) {
-		return deckService.getDeckById(new GetDeckByIdCommand(deckId))
-				.fold(
-						error -> mapErrors(error),
-						deckOption -> {
-              return deckOption.isEmpty() ? ResponseEntity.notFound().build() 
-                : ResponseEntity.ok(DeckTranslator.toDto(deckOption.get()));
+  @PostMapping()
+  public ResponseEntity<Object> createDeck(@RequestBody CreateDeckRequest entity) {
+    return deckService.createDeck(new CreateDeckCommand(entity.name))
+        .fold(
+            error -> mapErrors(error),
+            deck -> ResponseEntity.ok(DeckTranslator.toDto(deck)));
+  }
+
+  @GetMapping("/{deckId}")
+  public ResponseEntity<Object> getDeck(@PathVariable UUID deckId) {
+    return deckService.getDeckById(new GetDeckByIdCommand(deckId))
+        .fold(
+            error -> mapErrors(error),
+            deckOption -> {
+              return deckOption.isEmpty() ? ResponseEntity.notFound().build()
+                  : ResponseEntity.ok(DeckTranslator.toDto(deckOption.get()));
             });
-	}
+  }
 
-	@GetMapping("/{deckId}/cards")
-	public ResponseEntity<Object> getDeckCards(@PathVariable UUID deckId) {
-		return deckService.getDeckByIdWithCardEntries(new GetDeckByIdCommand(deckId))
-				.fold(
-						error -> mapErrors(error),
-						deckOption -> deckOption.isEmpty() ? ResponseEntity.notFound().build() 
-                : ResponseEntity.ok(DeckTranslator.toDto(deckOption.get()))
-				);
-	}
+  @GetMapping("/{deckId}/cards")
+  public ResponseEntity<Object> getDeckCards(@PathVariable UUID deckId) {
+    return deckService.getDeckByIdWithCardEntries(new GetDeckByIdCommand(deckId))
+        .fold(
+            error -> mapErrors(error),
+            deckOption -> deckOption.isEmpty() ? ResponseEntity.notFound().build()
+                : ResponseEntity.ok(DeckTranslator.toDto(deckOption.get())));
+  }
 
-	@GetMapping()
-	public ResponseEntity<Object> getAllDecks() {
-		return deckService.getAllDeckReferences()
-				.fold(
-						error -> mapErrors(error),
-						decksReferences -> ResponseEntity.ok(decksReferences
-								.map(DeckTranslator::toDto).asJava()
-						)
-				);
-	}
-	
-	@DeleteMapping("/{deckId}")
-	public ResponseEntity<Object> deleteDeck(@PathVariable UUID deckId) {
-		return deckService.deleteDeckById(new DeleteDeckCommand(deckId))
-				.fold(
-						error -> mapErrors(error),
-						v -> ResponseEntity.noContent().build()
-				);
-	}
+  @GetMapping()
+  public ResponseEntity<Object> getAllDecks() {
+    return deckService.getAllDeckReferences()
+        .fold(
+            error -> mapErrors(error),
+            decksReferences -> ResponseEntity.ok(decksReferences
+                .map(DeckTranslator::toDto).asJava()));
+  }
 
-	@PostMapping("/{deckId}/cards")
-	public ResponseEntity<Object> addCard(@PathVariable UUID deckId, @RequestBody CardEntryDto cardEntryDto) {
-		var cardEntryValidation = DeckTranslator.toDomain(cardEntryDto);
-		return cardEntryValidation.fold(
-			errors -> ResponseEntity.badRequest().body(errors.asJava()),
-			cardEntry -> deckService.addCardToDeck(new AddCardToDeckCommand(deckId, cardEntry))
-				.fold(
-					error -> mapErrors(error),
-					updatedDeckOption -> updatedDeckOption.isEmpty() ? ResponseEntity.notFound().build()
-            : ResponseEntity.ok(DeckTranslator.toDto(updatedDeckOption.get()))
-				)
-		);
-	}
+  @DeleteMapping("/{deckId}")
+  public ResponseEntity<Object> deleteDeck(@PathVariable UUID deckId) {
+    return deckService.deleteDeckById(new DeleteDeckCommand(deckId))
+        .fold(
+            error -> mapErrors(error),
+            v -> ResponseEntity.noContent().build());
+  }
 
-	@DeleteMapping("/{deckId}/cards/{cardId}")
-	public ResponseEntity<Object> removeCard(@PathVariable UUID deckId, @PathVariable String cardId) {
-		return deckService.removeCardFromDeck(new RemoveCardFromDeckCommand(deckId, cardId))
-			.fold(
-				error -> mapErrors(error),
-				deckOption -> deckOption.isEmpty() ? ResponseEntity.notFound().build() 
-                : ResponseEntity.ok(DeckTranslator.toDto(deckOption.get()))
-			);
-	}
+  @PostMapping("/{deckId}/cards")
+  public ResponseEntity<Object> addCard(@PathVariable UUID deckId, @RequestBody CardEntryDto cardEntryDto) {
+    var cardEntryValidation = DeckTranslator.toDomain(cardEntryDto);
+    return cardEntryValidation.fold(
+        errors -> ResponseEntity.badRequest().body(errors.asJava()),
+        cardEntry -> deckService.addCardToDeck(new AddCardToDeckCommand(deckId, cardEntry))
+            .fold(
+                error -> mapErrors(error),
+                updatedDeckOption -> updatedDeckOption.isEmpty() ? ResponseEntity.notFound().build()
+                    : ResponseEntity.ok(DeckTranslator.toDto(updatedDeckOption.get()))));
+  }
 
-	@PutMapping("/{deckId}/cards/{cardId}")
-	public ResponseEntity<Object> updateCard(@PathVariable UUID deckId, @PathVariable String cardId, @RequestBody UpdateCardCountRequest request) {
-		return deckService.updateCardCountInDeck(new UpdateCardCountCommand(deckId, cardId, request.count()))
-			.fold(
-				error -> mapErrors(error),
-				deckOption -> deckOption.isEmpty() ? ResponseEntity.notFound().build() 
-                : ResponseEntity.ok(DeckTranslator.toDto(deckOption.get()))
-			);
-	}
-  
-  
+  @DeleteMapping("/{deckId}/cards/{cardId}")
+  public ResponseEntity<Object> removeCard(@PathVariable UUID deckId, @PathVariable String cardId) {
+    return deckService.removeCardFromDeck(new RemoveCardFromDeckCommand(deckId, cardId))
+        .fold(
+            error -> mapErrors(error),
+            deckOption -> deckOption.isEmpty() ? ResponseEntity.notFound().build()
+                : ResponseEntity.ok(DeckTranslator.toDto(deckOption.get())));
+  }
+
+  @PutMapping("/{deckId}/cards/{cardId}")
+  public ResponseEntity<Object> updateCard(@PathVariable UUID deckId, @PathVariable String cardId,
+      @RequestBody UpdateCardCountRequest request) {
+    return deckService.updateCardCountInDeck(new UpdateCardCountCommand(deckId, cardId, request.count()))
+        .fold(
+            error -> mapErrors(error),
+            deckOption -> deckOption.isEmpty() ? ResponseEntity.notFound().build()
+                : ResponseEntity.ok(DeckTranslator.toDto(deckOption.get())));
+  }
+
   @PostMapping("/{deckId}/validate/{formatId}")
   public ResponseEntity<Object> validate(@PathVariable UUID deckId, @PathVariable UUID formatId) {
     return deckValidationService.validateDeckAgainstFormat(new ValidateDeckCommand(deckId, formatId))
-      .fold(
-        errors -> mapErrors(errors), 
-        validationMessages -> ResponseEntity.ok().body(validationMessages.isEmpty() ? List.of("Deck is valid") : validationMessages));
-  } 
+        .fold(
+            errors -> mapErrors(errors),
+            validationMessages -> ResponseEntity.ok()
+                .body(validationMessages.isEmpty() ? List.of("Deck is valid") : validationMessages));
+  }
 
   @GetMapping("/hello")
   public ResponseEntity<Object> hello() {
     return ResponseEntity.ok("hello");
   }
 
-
   private ResponseEntity<Object> mapErrors(CustomError error) {
     return switch (error) {
-      case CustomError.ValidationError(var errors) -> ResponseEntity.badRequest().body(Map.of("error", errors.asJava()));
-      case CustomError.RepositoryError(var message, var e) -> 
-            ResponseEntity.internalServerError().body(Map.of("error", "An error occurred. Try again later"));
-      case CustomError.RehydrationError(var errors) -> 
-            ResponseEntity.internalServerError().body(Map.of("error", "An error occurred. Try again later"));
+      case CustomError.ValidationError(var errors) ->
+        ResponseEntity.badRequest().body(Map.of("error", errors.asJava()));
+      case CustomError.RepositoryError(var message, var e) ->
+        ResponseEntity.internalServerError().body(Map.of("error", "An error occurred. Try again later"));
+      case CustomError.RehydrationError(var errors) ->
+        ResponseEntity.internalServerError().body(Map.of("error", "An error occurred. Try again later"));
       case CustomError.NotFoundError(var message) -> ResponseEntity.notFound().build();
       case CustomError.ConflictError() -> ResponseEntity.status(HttpStatus.CONFLICT).build();
+      case CustomError.NoUserError() -> ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     };
   }
 }
